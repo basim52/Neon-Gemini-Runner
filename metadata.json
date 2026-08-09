@@ -1,0 +1,8 @@
+{
+  "name": "Neon Gemini Runner",
+  "description": "An action-packed 3D synthwave runner with powerups, laser blasters, player skins, dynamic obstacles, and high-energy electronic audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
