@@ -71,7 +71,7 @@ const SHOP_ITEMS: ShopItem[] = [
 const ShopScreen: React.FC = () => {
     const { 
       score, buyItem, closeShop, hasDoubleJump, hasImmortality, 
-      unlockedSkins, activeSkin, setSkin, buySkin, totalGems 
+      unlockedSkins, activeSkin, selectSkin, buySkin, totalGems 
     } = useStore();
     
     const [tab, setTab] = useState<'UPGRADES' | 'SKINS'>('UPGRADES');
@@ -165,14 +165,14 @@ const ShopScreen: React.FC = () => {
                                   </div>
                                 ) : isUnlocked ? (
                                   <button 
-                                    onClick={() => setSkin(skinKey)}
+                                    onClick={() => selectSkin(skinKey)}
                                     className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded transition-all"
                                   >
                                       EQUIP
                                   </button>
                                 ) : (
                                   <button 
-                                    onClick={() => buySkin(skinKey)}
+                                    onClick={() => buySkin(skinKey, skin.cost)}
                                     disabled={!canAfford}
                                     className={`w-full py-2 font-bold text-xs rounded transition-all ${canAfford ? 'bg-pink-600 hover:bg-pink-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}
                                   >
@@ -199,7 +199,7 @@ const ShopScreen: React.FC = () => {
 export const HUD: React.FC = () => {
   const { 
     score, lives, maxLives, collectedLetters, status, level, restartGame, startGame, 
-    gemsCollected, distance, isImmortalityActive, speed, isMagnetActive, magnetTimer,
+    gemsCollected, distance, isImmortalityActive, speed, isMagnetActive,
     blasterAmmo, isShieldDroneActive, highScore, bestDistance, totalGems, useBlasterAmmo, activateImmortality
   } = useStore();
 
@@ -218,7 +218,11 @@ export const HUD: React.FC = () => {
   const toggleBgm = () => {
     const newState = !bgmOn;
     setBgmOn(newState);
-    audio.toggleBGM(newState);
+    if (newState) {
+      audio.startBGM();
+    } else {
+      audio.stopBGM();
+    }
   };
 
   if (status === GameStatus.SHOP) {
@@ -391,7 +395,7 @@ export const HUD: React.FC = () => {
              )}
              {isMagnetActive && (
                   <div className="bg-cyan-500/20 border border-cyan-400 text-cyan-400 font-bold px-3 py-1 rounded-full text-xs md:text-sm flex items-center shadow-[0_0_10px_#00ffff]">
-                      <Magnet className="mr-1.5 w-4 h-4" /> MAGNET ({Math.ceil(magnetTimer)}s)
+                      <Magnet className="mr-1.5 w-4 h-4" /> MAGNET ACTIVE
                   </div>
              )}
              {isShieldDroneActive && (
