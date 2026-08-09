@@ -10,7 +10,7 @@ import {
   Volume2, VolumeX, Music, Sparkles, ChevronLeft, ChevronRight, ArrowUp
 } from 'lucide-react';
 import { useStore } from '../../store';
-import { GameStatus, GEMINI_COLORS, ShopItem, RUN_SPEED_BASE, PlayerSkin, SKINS_DATA } from '../../types';
+import { GameStatus, GEMINI_COLORS, ShopItem, RUN_SPEED_BASE, PlayerSkin, SKINS_DATA, getLevelTheme } from '../../types';
 import { audio } from '../System/Audio';
 
 // Shop Items List
@@ -245,7 +245,7 @@ export const HUD: React.FC = () => {
                      {/* Top Bar for High Score */}
                      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
                          <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-yellow-500/40 text-yellow-400 font-mono text-xs flex items-center">
-                             <Trophy className="w-3.5 h-3.5 mr-1" /> BEST: {highScore.toLocaleString()}
+                             <Trophy className="w-3.5 h-3.5 mr-1" /> أعلى نتيجة: {highScore.toLocaleString()}
                          </div>
                          <div className="flex space-x-2">
                              <button onClick={toggleSound} className="p-2 bg-black/60 rounded-full border border-white/20 text-white">
@@ -257,16 +257,15 @@ export const HUD: React.FC = () => {
                      <div className="absolute inset-0 flex flex-col justify-end items-center p-6 pb-8 text-center z-10">
                         <button 
                           onClick={() => { audio.init(); startGame(); }}
-                          className="w-full group relative px-6 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-black text-xl rounded-xl hover:bg-white/20 transition-all shadow-[0_0_20px_rgba(0,255,255,0.2)] hover:shadow-[0_0_30px_rgba(0,255,255,0.4)] hover:border-cyan-400 overflow-hidden"
+                          className="w-full group relative px-6 py-4 bg-gradient-to-r from-cyan-500 via-blue-600 to-pink-500 text-white font-black text-xl rounded-2xl hover:scale-102 transition-all shadow-[0_0_30px_rgba(0,255,255,0.4)] active:scale-95 overflow-hidden"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/40 via-purple-500/40 to-pink-500/40 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                            <span className="relative z-10 tracking-widest flex items-center justify-center">
-                                INITIALIZE RUN <Play className="ml-2 w-5 h-5 fill-white" />
+                            <span className="relative z-10 tracking-wider flex items-center justify-center font-sans">
+                                ابدأ اللعب الان <Play className="mr-2 ml-2 w-6 h-6 fill-white" />
                             </span>
                         </button>
 
-                        <p className="text-cyan-400/80 text-[11px] md:text-xs font-mono mt-3 tracking-wider">
-                            [ ARROWS / SWIPE TO MOVE | SPACE FOR IMMORTALITY | F TO FIRE ]
+                        <p className="text-cyan-300/90 text-xs font-sans mt-3 tracking-wide">
+                            استخدم أزرار الشاشة أو الأسهم للتحكم بالركض والقفز!
                         </p>
                      </div>
                 </div>
@@ -278,33 +277,34 @@ export const HUD: React.FC = () => {
   if (status === GameStatus.GAME_OVER) {
       return (
           <div className="absolute inset-0 bg-black/90 z-[100] text-white pointer-events-auto backdrop-blur-sm overflow-y-auto">
-              <div className="flex flex-col items-center justify-center min-h-full py-8 px-4">
-                <h1 className="text-4xl md:text-6xl font-black text-white mb-6 drop-shadow-[0_0_10px_rgba(255,0,0,0.8)] font-cyber text-center">GAME OVER</h1>
+              <div className="flex flex-col items-center justify-center min-h-full py-8 px-4 dir-rtl">
+                <h1 className="text-4xl md:text-6xl font-black text-red-500 mb-2 drop-shadow-[0_0_15px_rgba(255,0,0,0.8)] font-sans text-center">انتهت اللعبة</h1>
+                <p className="text-gray-400 text-sm mb-6">لقد اصطدمت بالعوائق، حاول مجدداً!</p>
                 
                 <div className="grid grid-cols-1 gap-3 md:gap-4 text-center mb-8 w-full max-w-md">
-                    <div className="bg-gray-900/80 p-3 md:p-4 rounded-lg border border-gray-700 flex items-center justify-between">
-                        <div className="flex items-center text-yellow-400 text-sm md:text-base"><Trophy className="mr-2 w-4 h-4 md:w-5 md:h-5"/> HIGH SCORE</div>
+                    <div className="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-700 flex items-center justify-between">
+                        <div className="flex items-center text-yellow-400 text-sm md:text-base"><Trophy className="ml-2 w-5 h-5"/> أعلى نتيجة</div>
                         <div className="text-xl md:text-2xl font-bold font-mono text-yellow-400">{highScore.toLocaleString()}</div>
                     </div>
-                    <div className="bg-gray-900/80 p-3 md:p-4 rounded-lg border border-gray-700 flex items-center justify-between">
-                        <div className="flex items-center text-cyan-400 text-sm md:text-base"><Diamond className="mr-2 w-4 h-4 md:w-5 md:h-5"/> GEMS COLLECTED</div>
+                    <div className="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-700 flex items-center justify-between">
+                        <div className="flex items-center text-cyan-400 text-sm md:text-base"><Diamond className="ml-2 w-5 h-5"/> الجواهر المجمعة</div>
                         <div className="text-xl md:text-2xl font-bold font-mono">{gemsCollected}</div>
                     </div>
-                    <div className="bg-gray-900/80 p-3 md:p-4 rounded-lg border border-gray-700 flex items-center justify-between">
-                        <div className="flex items-center text-purple-400 text-sm md:text-base"><MapPin className="mr-2 w-4 h-4 md:w-5 md:h-5"/> DISTANCE</div>
-                        <div className="text-xl md:text-2xl font-bold font-mono">{Math.floor(distance)} LY</div>
+                    <div className="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-700 flex items-center justify-between">
+                        <div className="flex items-center text-purple-400 text-sm md:text-base"><MapPin className="ml-2 w-5 h-5"/> المسافة المقطوعة</div>
+                        <div className="text-xl md:text-2xl font-bold font-mono">{Math.floor(distance)} م</div>
                     </div>
-                     <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg flex items-center justify-between mt-2 border border-cyan-500/30">
-                        <div className="flex items-center text-white text-sm md:text-base">THIS RUN SCORE</div>
-                        <div className="text-2xl md:text-3xl font-bold font-cyber text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">{score.toLocaleString()}</div>
+                     <div className="bg-gray-800/80 p-3 md:p-4 rounded-xl flex items-center justify-between mt-2 border border-cyan-500/50 shadow-[0_0_15px_rgba(0,255,255,0.2)]">
+                        <div className="flex items-center text-white text-sm md:text-base font-bold">النتيجة الحالية</div>
+                        <div className="text-2xl md:text-3xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">{score.toLocaleString()}</div>
                     </div>
                 </div>
 
                 <button 
                   onClick={() => { audio.init(); restartGame(); }}
-                  className="px-8 md:px-10 py-3 md:py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-lg md:text-xl rounded-xl hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,255,255,0.4)]"
+                  className="px-8 md:px-12 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-xl rounded-2xl active:scale-95 transition-all shadow-[0_0_25px_rgba(0,255,255,0.5)]"
                 >
-                    RUN AGAIN
+                    إعادة اللعب 🔄
                 </button>
               </div>
           </div>
@@ -382,8 +382,9 @@ export const HUD: React.FC = () => {
         </div>
         
         {/* Level Indicator */}
-        <div className="absolute top-5 left-1/2 transform -translate-x-1/2 text-xs md:text-base text-purple-300 font-bold tracking-wider font-mono bg-black/60 px-3 py-1 rounded-full border border-purple-500/30 backdrop-blur-sm z-50">
-            LEVEL {level} <span className="text-gray-500 text-xs">/ 3</span>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-xs md:text-sm text-cyan-300 font-bold tracking-wider font-mono bg-black/80 px-4 py-1.5 rounded-full border border-cyan-500/40 backdrop-blur-md z-50 flex items-center space-x-2 shadow-[0_0_15px_rgba(0,255,255,0.3)] dir-rtl">
+            <span>{getLevelTheme(level).nameAr}</span>
+            <span className="text-gray-400 text-xs font-mono">({level}/5)</span>
         </div>
 
         {/* Active Powerups Row */}
@@ -429,25 +430,29 @@ export const HUD: React.FC = () => {
         </div>
 
         {/* On-Screen Touch / Mobile Controls */}
-        <div className="w-full flex justify-between items-end pb-2 pointer-events-auto">
-             {/* Left / Right Lane Switches */}
-             <div className="flex space-x-3">
+        <div className="w-full flex justify-between items-end pb-3 px-1 pointer-events-auto z-40">
+             {/* Left side: Directional Touch Controls */}
+             <div className="flex space-x-2 sm:space-x-3 dir-rtl">
                  <button 
                   onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))}
-                  className="w-14 h-14 bg-black/60 backdrop-blur-md border border-cyan-500/50 rounded-2xl flex items-center justify-center text-cyan-400 active:scale-95 shadow-[0_0_15px_rgba(0,255,255,0.2)]"
+                  className="w-16 h-16 sm:w-18 sm:h-18 bg-black/70 backdrop-blur-md border-2 border-cyan-400/70 rounded-2xl flex flex-col items-center justify-center text-cyan-300 active:scale-90 active:bg-cyan-500/30 transition-transform shadow-[0_0_20px_rgba(0,255,255,0.3)]"
+                  aria-label="Move Left"
                  >
                      <ChevronLeft className="w-8 h-8" />
+                     <span className="text-[10px] font-bold tracking-tighter">يسار</span>
                  </button>
                  <button 
                   onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))}
-                  className="w-14 h-14 bg-black/60 backdrop-blur-md border border-cyan-500/50 rounded-2xl flex items-center justify-center text-cyan-400 active:scale-95 shadow-[0_0_15px_rgba(0,255,255,0.2)]"
+                  className="w-16 h-16 sm:w-18 sm:h-18 bg-black/70 backdrop-blur-md border-2 border-cyan-400/70 rounded-2xl flex flex-col items-center justify-center text-cyan-300 active:scale-90 active:bg-cyan-500/30 transition-transform shadow-[0_0_20px_rgba(0,255,255,0.3)]"
+                  aria-label="Move Right"
                  >
                      <ChevronRight className="w-8 h-8" />
+                     <span className="text-[10px] font-bold tracking-tighter">يمين</span>
                  </button>
              </div>
 
-             {/* Speed Stats & Jump / Fire Buttons */}
-             <div className="flex items-center space-x-3">
+             {/* Right side: Action Buttons (Laser, Jump, Special) */}
+             <div className="flex items-center space-x-2 sm:space-x-3">
                  {blasterAmmo > 0 && (
                    <button 
                     onClick={() => {
@@ -456,22 +461,26 @@ export const HUD: React.FC = () => {
                         window.dispatchEvent(new CustomEvent('fire-laser-shot', { detail: { x: 0, y: 1.2 } }));
                       }
                     }}
-                    className="px-4 h-14 bg-amber-500/20 border border-amber-400 text-amber-300 font-bold rounded-2xl flex items-center justify-center active:scale-95 shadow-[0_0_15px_rgba(255,170,0,0.4)] text-sm"
+                    className="px-3 h-16 sm:h-18 bg-amber-500/30 backdrop-blur-md border-2 border-amber-400 text-amber-300 font-bold rounded-2xl flex flex-col items-center justify-center active:scale-90 active:bg-amber-500/50 transition-transform shadow-[0_0_20px_rgba(255,170,0,0.5)] text-xs"
+                    aria-label="Fire Blaster"
                    >
-                       <Crosshair className="w-5 h-5 mr-1" /> FIRE ({blasterAmmo})
+                       <Crosshair className="w-6 h-6 text-amber-300 animate-pulse" />
+                       <span className="text-[10px] mt-0.5">إطلاق ({blasterAmmo})</span>
                    </button>
                  )}
 
                  <button 
                   onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }))}
-                  className="w-14 h-14 bg-pink-500/20 backdrop-blur-md border border-pink-500 rounded-2xl flex items-center justify-center text-pink-400 active:scale-95 shadow-[0_0_15px_rgba(255,0,100,0.3)]"
+                  className="w-16 h-16 sm:w-18 sm:h-18 bg-pink-500/30 backdrop-blur-md border-2 border-pink-500 rounded-2xl flex flex-col items-center justify-center text-pink-300 active:scale-90 active:bg-pink-500/50 transition-transform shadow-[0_0_20px_rgba(255,0,100,0.4)]"
+                  aria-label="Jump"
                  >
                      <ArrowUp className="w-8 h-8" />
+                     <span className="text-[10px] font-bold tracking-tighter">قفز</span>
                  </button>
 
-                 <div className="hidden sm:flex items-center space-x-2 text-cyan-500 opacity-80 pl-2">
+                 <div className="hidden lg:flex items-center space-x-2 text-cyan-400 opacity-90 pl-2 font-mono">
                      <Zap className="w-4 h-4 animate-pulse" />
-                     <span className="font-mono text-sm">SPD {Math.round((speed / RUN_SPEED_BASE) * 100)}%</span>
+                     <span className="text-sm">SPD {Math.round((speed / RUN_SPEED_BASE) * 100)}%</span>
                  </div>
              </div>
         </div>

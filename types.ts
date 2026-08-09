@@ -133,3 +133,132 @@ export interface ShopItem {
     icon: any; // Lucide icon component
     oneTime?: boolean; // If true, remove from pool after buying
 }
+
+export interface LevelTheme {
+  level: number;
+  nameAr: string;
+  nameEn: string;
+  bgColor: string;
+  fogColor: string;
+  ambientColor: string;
+  directionalColor: string;
+  pointLightColor: string;
+  sunTopColor: string;
+  sunBottomColor: string;
+  gridColor: string;
+  floorColor: string;
+  laneColor: string;
+  sceneryType: 'CYBER_CITY' | 'VOLCANIC_INFERNO' | 'MATRIX_JUNGLE' | 'COSMIC_VOID' | 'FROST_REALM';
+  obstacleColor: string;
+  obstacleGlow: string;
+  alienColor: string;
+  missileColor: string;
+}
+
+export const LEVEL_THEMES: LevelTheme[] = [
+  {
+    level: 1,
+    nameAr: "المرحلة 1: المدينة السيبرانية",
+    nameEn: "STAGE 1: NEO CYBER CITY",
+    bgColor: "#050011",
+    fogColor: "#050011",
+    ambientColor: "#400080",
+    directionalColor: "#00ffff",
+    pointLightColor: "#ff00aa",
+    sunTopColor: "#ffe600",
+    sunBottomColor: "#ff0077",
+    gridColor: "#8800ff",
+    floorColor: "#1a0b2e",
+    laneColor: "#00ffff",
+    sceneryType: "CYBER_CITY",
+    obstacleColor: "#00ffff",
+    obstacleGlow: "#ff00aa",
+    alienColor: "#00ffaa",
+    missileColor: "#ff0055",
+  },
+  {
+    level: 2,
+    nameAr: "المرحلة 2: عـالـم الـبـراكـيـن والـحـمـم",
+    nameEn: "STAGE 2: LAVA INFERNO CANYON",
+    bgColor: "#1a0200",
+    fogColor: "#1a0200",
+    ambientColor: "#661100",
+    directionalColor: "#ff4400",
+    pointLightColor: "#ffaa00",
+    sunTopColor: "#ffff00",
+    sunBottomColor: "#ff2200",
+    gridColor: "#ff3300",
+    floorColor: "#2a0800",
+    laneColor: "#ffaa00",
+    sceneryType: "VOLCANIC_INFERNO",
+    obstacleColor: "#ff4400",
+    obstacleGlow: "#ffaa00",
+    alienColor: "#ff2200",
+    missileColor: "#ff8800",
+  },
+  {
+    level: 3,
+    nameAr: "المرحلة 3: غـابـة الـمـاتـريـكـس الـرقـمـيـة",
+    nameEn: "STAGE 3: CYBER MATRIX JUNGLE",
+    bgColor: "#000d05",
+    fogColor: "#000d05",
+    ambientColor: "#003311",
+    directionalColor: "#00ff66",
+    pointLightColor: "#00ffcc",
+    sunTopColor: "#aaff00",
+    sunBottomColor: "#00aa44",
+    gridColor: "#00ff44",
+    floorColor: "#001f0a",
+    laneColor: "#00ff88",
+    sceneryType: "MATRIX_JUNGLE",
+    obstacleColor: "#00ff66",
+    obstacleGlow: "#00ffcc",
+    alienColor: "#33ff00",
+    missileColor: "#00ffaa",
+  },
+  {
+    level: 4,
+    nameAr: "المرحلة 4: الفـضـاء الـكـونـي والمـجـرات",
+    nameEn: "STAGE 4: COSMIC NEBULA REALM",
+    bgColor: "#0a001a",
+    fogColor: "#0a001a",
+    ambientColor: "#220044",
+    directionalColor: "#ff00aa",
+    pointLightColor: "#ffd700",
+    sunTopColor: "#ffffff",
+    sunBottomColor: "#aa00ff",
+    gridColor: "#aa00ff",
+    floorColor: "#150033",
+    laneColor: "#ffd700",
+    sceneryType: "COSMIC_VOID",
+    obstacleColor: "#d8b4fe",
+    obstacleGlow: "#ff00aa",
+    alienColor: "#e0e7ff",
+    missileColor: "#ffd700",
+  },
+  {
+    level: 5,
+    nameAr: "المرحلة 5: مـمـلـكـة الـجـلـيـد السيـبـراني",
+    nameEn: "STAGE 5: GLACIAL FROST KINGDOM",
+    bgColor: "#001020",
+    fogColor: "#001020",
+    ambientColor: "#002244",
+    directionalColor: "#00d3ff",
+    pointLightColor: "#0088ff",
+    sunTopColor: "#e0ffff",
+    sunBottomColor: "#0066cc",
+    gridColor: "#00aaff",
+    floorColor: "#00203a",
+    laneColor: "#ffffff",
+    sceneryType: "FROST_REALM",
+    obstacleColor: "#00d3ff",
+    obstacleGlow: "#ffffff",
+    alienColor: "#80e5ff",
+    missileColor: "#00aaff",
+  }
+];
+
+export const getLevelTheme = (level: number): LevelTheme => {
+  const index = Math.max(0, (level - 1) % LEVEL_THEMES.length);
+  return LEVEL_THEMES[index];
+};

@@ -67,7 +67,7 @@ interface GameState {
 }
 
 const GEMINI_TARGET = ['G', 'E', 'M', 'I', 'N', 'I'];
-const MAX_LEVEL = 3;
+const MAX_LEVEL = 5;
 
 // Helper to safely read localStorage
 const getStoredNum = (key: string, fallback: number): number => {

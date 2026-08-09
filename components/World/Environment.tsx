@@ -3,29 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../../store';
-import { LANE_WIDTH } from '../../types';
+import { LANE_WIDTH, getLevelTheme, LevelTheme } from '../../types';
 
-const StarField: React.FC = () => {
+const StarField: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
   const speed = useStore(state => state.speed);
-  const count = 3000; // Increased star count for better density
+  const count = 3000;
   const meshRef = useRef<THREE.Points>(null);
   
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       let x = (Math.random() - 0.5) * 400;
-      let y = (Math.random() - 0.5) * 200 + 50; // Keep mostly above horizon
-      
-      // Distribute Z randomly along the entire travel path plus buffer
-      // Range: -550 to 100 to ensure full coverage from start
+      let y = (Math.random() - 0.5) * 200 + 50;
       let z = -550 + Math.random() * 650;
 
-      // Exclude stars from the central play area
       if (Math.abs(x) < 15 && y > -5 && y < 20) {
           if (x < 0) x -= 15;
           else x += 15;
@@ -42,18 +37,14 @@ const StarField: React.FC = () => {
     if (!meshRef.current) return;
     
     const positions = meshRef.current.geometry.attributes.position.array as Float32Array;
-    const activeSpeed = speed > 0 ? speed : 2; // Always move slightly even when stopped
+    const activeSpeed = speed > 0 ? speed : 2;
 
     for (let i = 0; i < count; i++) {
         let z = positions[i * 3 + 2];
-        z += activeSpeed * delta * 2.0; // Parallax effect
+        z += activeSpeed * delta * 2.0;
         
-        // Reset when it passes the camera (z > 100 gives plenty of buffer behind camera)
         if (z > 100) {
-            // Reset far back with a random buffer to prevent "walls" of stars
             z = -550 - Math.random() * 50; 
-            
-            // Re-randomize X/Y on respawn with exclusion logic
             let x = (Math.random() - 0.5) * 400;
             let y = (Math.random() - 0.5) * 200 + 50;
             
@@ -81,8 +72,8 @@ const StarField: React.FC = () => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.5}
-        color="#ffffff"
+        size={0.6}
+        color={theme.directionalColor}
         transparent
         opacity={0.8}
         sizeAttenuation
@@ -91,7 +82,7 @@ const StarField: React.FC = () => {
   );
 };
 
-const LaneGuides: React.FC = () => {
+const LaneGuides: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
     const { laneCount } = useStore();
     
     const separators = useMemo(() => {
@@ -106,20 +97,20 @@ const LaneGuides: React.FC = () => {
 
     return (
         <group position={[0, 0.02, 0]}>
-            {/* Lane Floor - Lowered slightly to -0.02 */}
+            {/* Lane Floor */}
             <mesh position={[0, -0.02, -20]} rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[laneCount * LANE_WIDTH, 200]} />
-                <meshBasicMaterial color="#1a0b2e" transparent opacity={0.9} />
+                <meshBasicMaterial color={theme.floorColor} transparent opacity={0.92} />
             </mesh>
 
-            {/* Lane Separators - Glowing Lines */}
+            {/* Lane Separators */}
             {separators.map((x, i) => (
                 <mesh key={`sep-${i}`} position={[x, 0, -20]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <planeGeometry args={[0.05, 200]} /> 
+                    <planeGeometry args={[0.06, 200]} /> 
                     <meshBasicMaterial 
-                        color="#00ffff" 
+                        color={theme.laneColor} 
                         transparent 
-                        opacity={0.4} 
+                        opacity={0.5} 
                     />
                 </mesh>
             ))}
@@ -127,15 +118,16 @@ const LaneGuides: React.FC = () => {
     );
 };
 
-const RetroSun: React.FC = () => {
+const RetroSun: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
     const matRef = useRef<THREE.ShaderMaterial>(null);
     const sunGroupRef = useRef<THREE.Group>(null);
 
     useFrame((state) => {
         if (matRef.current) {
             matRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+            matRef.current.uniforms.uColorTop.value.set(theme.sunTopColor);
+            matRef.current.uniforms.uColorBottom.value.set(theme.sunBottomColor);
         }
-        // Gentle bobbing
         if (sunGroupRef.current) {
             sunGroupRef.current.position.y = 30 + Math.sin(state.clock.elapsedTime * 0.2) * 1.0;
             sunGroupRef.current.rotation.y = state.clock.elapsedTime * 0.05;
@@ -144,13 +136,12 @@ const RetroSun: React.FC = () => {
 
     const uniforms = useMemo(() => ({
         uTime: { value: 0 },
-        uColorTop: { value: new THREE.Color('#ffe600') }, // Bright Yellow
-        uColorBottom: { value: new THREE.Color('#ff0077') } // Magenta/Pink
-    }), []);
+        uColorTop: { value: new THREE.Color(theme.sunTopColor) },
+        uColorBottom: { value: new THREE.Color(theme.sunBottomColor) }
+    }), [theme]);
 
     return (
         <group ref={sunGroupRef} position={[0, 30, -180]}>
-            {/* Reduced Geometry for Mobile: 32 segments instead of 64 */}
             <mesh>
                 <sphereGeometry args={[35, 32, 32]} />
                 <shaderMaterial
@@ -159,7 +150,6 @@ const RetroSun: React.FC = () => {
                     transparent
                     vertexShader={`
                         varying vec2 vUv;
-
                         void main() {
                             vUv = uv;
                             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -172,24 +162,13 @@ const RetroSun: React.FC = () => {
                         uniform vec3 uColorBottom;
 
                         void main() {
-                            // 1. Basic Vertical Gradient
                             vec3 color = mix(uColorBottom, uColorTop, vUv.y);
-                            
-                            // 2. Synthwave Scanlines
                             float stripeFreq = 40.0;
                             float stripeSpeed = 1.0;
-                            // Simple scanline logic without heavy rim lighting
                             float stripes = sin((vUv.y * stripeFreq) - (uTime * stripeSpeed));
-                            
-                            // Create sharp bands
                             float stripeMask = smoothstep(0.2, 0.3, stripes);
-                            
-                            // Fade scanlines out towards the top of the sun
                             float scanlineFade = smoothstep(0.7, 0.3, vUv.y); 
-                            
-                            // Apply dark bands (scanlines)
                             vec3 finalColor = mix(color, color * 0.1, (1.0 - stripeMask) * scanlineFade);
-
                             gl_FragColor = vec4(finalColor, 1.0);
                         }
                     `}
@@ -199,7 +178,7 @@ const RetroSun: React.FC = () => {
     );
 };
 
-const MovingGrid: React.FC = () => {
+const MovingGrid: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
     const speed = useStore(state => state.speed);
     const meshRef = useRef<THREE.Mesh>(null);
     const offsetRef = useRef(0);
@@ -208,11 +187,7 @@ const MovingGrid: React.FC = () => {
         if (meshRef.current) {
              const activeSpeed = speed > 0 ? speed : 5;
              offsetRef.current += activeSpeed * delta;
-             
-             // Grid cell size = 400 (length) / 40 (segments) = 10 units
              const cellSize = 10;
-             
-             // Move mesh forward (+Z) to simulate travel, then snap back
              const zPos = -100 + (offsetRef.current % cellSize);
              meshRef.current.position.z = zPos;
         }
@@ -222,30 +197,142 @@ const MovingGrid: React.FC = () => {
         <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, -100]}>
             <planeGeometry args={[300, 400, 30, 40]} />
             <meshBasicMaterial 
-                color="#8800ff" 
+                color={theme.gridColor} 
                 wireframe 
                 transparent 
-                opacity={0.15} 
+                opacity={0.25} 
             />
         </mesh>
     );
 };
 
+const SideScenery: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
+  const speed = useStore(state => state.speed);
+  const count = 18;
+  const groupRef = useRef<THREE.Group>(null);
+
+  const sceneryItems = useMemo(() => {
+    const items = [];
+    for (let i = 0; i < count; i++) {
+      const z = -320 + (i * (360 / count));
+      const scaleY = 0.8 + Math.random() * 1.4;
+      const variant = Math.floor(Math.random() * 3);
+      items.push({ id: i, side: i % 2 === 0 ? -1 : 1, z, scaleY, variant });
+    }
+    return items;
+  }, []);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    const activeSpeed = speed > 0 ? speed : 5;
+    groupRef.current.children.forEach((child) => {
+      child.position.z += activeSpeed * delta;
+      if (child.position.z > 30) {
+        child.position.z = -330 - Math.random() * 20;
+      }
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {sceneryItems.map((item) => {
+        const posX = item.side * (13 + item.variant * 3);
+        return (
+          <group key={item.id} position={[posX, 0, item.z]} scale={[1, item.scaleY, 1]}>
+            {theme.sceneryType === 'CYBER_CITY' && (
+              <group position={[0, 6, 0]}>
+                <mesh castShadow>
+                  <boxGeometry args={[4, 12, 4]} />
+                  <meshStandardMaterial color="#0a0520" roughness={0.3} metalness={0.8} />
+                </mesh>
+                {/* Glowing neon window strips */}
+                <mesh position={[0, 0, 2.01]}>
+                  <planeGeometry args={[2, 10]} />
+                  <meshBasicMaterial color={theme.directionalColor} transparent opacity={0.7} />
+                </mesh>
+              </group>
+            )}
+
+            {theme.sceneryType === 'VOLCANIC_INFERNO' && (
+              <group position={[0, 5, 0]}>
+                <mesh castShadow>
+                  <coneGeometry args={[5, 10, 5]} />
+                  <meshStandardMaterial color="#1f0300" roughness={0.9} />
+                </mesh>
+                {/* Lava top cone */}
+                <mesh position={[0, 3, 0]}>
+                  <coneGeometry args={[2, 4, 5]} />
+                  <meshBasicMaterial color="#ff3300" />
+                </mesh>
+              </group>
+            )}
+
+            {theme.sceneryType === 'MATRIX_JUNGLE' && (
+              <group position={[0, 7, 0]}>
+                <mesh castShadow>
+                  <cylinderGeometry args={[1, 2.5, 14, 6]} />
+                  <meshStandardMaterial color="#001a08" roughness={0.5} wireframe />
+                </mesh>
+                {/* Glowing Matrix Energy Core */}
+                <mesh position={[0, 0, 0]}>
+                  <cylinderGeometry args={[0.5, 0.5, 14, 6]} />
+                  <meshBasicMaterial color="#00ff66" />
+                </mesh>
+              </group>
+            )}
+
+            {theme.sceneryType === 'COSMIC_VOID' && (
+              <group position={[0, 5, 0]} rotation={[0.4, 0.5, 0.2]}>
+                <mesh castShadow>
+                  <dodecahedronGeometry args={[3.5, 0]} />
+                  <meshStandardMaterial color="#1a0033" roughness={0.4} metalness={0.6} />
+                </mesh>
+                {/* Celestial Ring */}
+                <mesh rotation={[Math.PI / 2, 0, 0]}>
+                  <torusGeometry args={[5, 0.15, 16, 32]} />
+                  <meshBasicMaterial color={theme.directionalColor} />
+                </mesh>
+              </group>
+            )}
+
+            {theme.sceneryType === 'FROST_REALM' && (
+              <group position={[0, 6, 0]}>
+                <mesh castShadow>
+                  <octahedronGeometry args={[4, 0]} />
+                  <meshStandardMaterial color="#002b47" roughness={0.1} metalness={0.9} />
+                </mesh>
+                {/* Frost Crystal Tip */}
+                <mesh position={[0, 4, 0]}>
+                  <octahedronGeometry args={[1.5, 0]} />
+                  <meshBasicMaterial color="#00d3ff" />
+                </mesh>
+              </group>
+            )}
+          </group>
+        );
+      })}
+    </group>
+  );
+};
+
 export const Environment: React.FC = () => {
+  const level = useStore(state => state.level);
+  const theme = getLevelTheme(level);
+
   return (
     <>
-      <color attach="background" args={['#050011']} />
-      <fog attach="fog" args={['#050011', 40, 160]} />
+      <color attach="background" args={[theme.bgColor]} />
+      <fog attach="fog" args={[theme.fogColor, 40, 160]} />
       
-      <ambientLight intensity={0.2} color="#400080" />
-      <directionalLight position={[0, 20, -10]} intensity={1.5} color="#00ffff" />
-      <pointLight position={[0, 25, -150]} intensity={2} color="#ff00aa" distance={200} decay={2} />
+      <ambientLight intensity={0.3} color={theme.ambientColor} />
+      <directionalLight position={[0, 20, -10]} intensity={1.5} color={theme.directionalColor} />
+      <pointLight position={[0, 25, -150]} intensity={2.5} color={theme.pointLightColor} distance={220} decay={2} />
       
-      <StarField />
-      <MovingGrid />
-      <LaneGuides />
-      
-      <RetroSun />
+      <StarField theme={theme} />
+      <MovingGrid theme={theme} />
+      <LaneGuides theme={theme} />
+      <SideScenery theme={theme} />
+      <RetroSun theme={theme} />
     </>
   );
 };

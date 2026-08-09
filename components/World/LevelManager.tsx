@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { Text3D, Center } from '@react-three/drei';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../../store';
-import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS } from '../../types';
+import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, getLevelTheme } from '../../types';
 import { audio } from '../System/Audio';
 
 // Geometry Constants
@@ -503,19 +503,20 @@ export const LevelManager: React.FC = () => {
 
          } else if (Math.random() > 0.1) {
             const isObstacle = Math.random() > 0.20;
+            const currentTheme = getLevelTheme(level);
 
             if (isObstacle) {
                 const spawnTypeVal = Math.random();
 
                 if (level >= 2 && spawnTypeVal < 0.2) {
-                    // Alien
+                    // Alien / Enemy
                     const lane = getRandomLane(laneCount);
                     keptObjects.push({
                         id: uuidv4(),
                         type: ObjectType.ALIEN,
                         position: [lane * LANE_WIDTH, 1.5, spawnZ],
                         active: true,
-                        color: '#00ff00',
+                        color: currentTheme.alienColor,
                         hasFired: false
                     });
                 } else if (level >= 2 && spawnTypeVal >= 0.2 && spawnTypeVal < 0.35) {
@@ -526,14 +527,14 @@ export const LevelManager: React.FC = () => {
                         type: ObjectType.SLIDING_BARRIER,
                         position: [0, 0.6, spawnZ],
                         active: true,
-                        color: '#ff00aa',
+                        color: currentTheme.obstacleGlow,
                         slideSpeed: 4 + Math.random() * 3,
                         slideDirection: Math.random() > 0.5 ? 1 : -1,
                         minX: -maxLane * LANE_WIDTH,
                         maxX: maxLane * LANE_WIDTH
                     });
                 } else {
-                    // Standard Spike Cones
+                    // Standard Obstacle Spikes / Crystals
                     const availableLanes = [];
                     const maxLane = Math.floor(laneCount / 2);
                     for (let i = -maxLane; i <= maxLane; i++) availableLanes.push(i);
@@ -559,7 +560,7 @@ export const LevelManager: React.FC = () => {
                             type: ObjectType.OBSTACLE,
                             position: [laneX, OBSTACLE_HEIGHT / 2, spawnZ],
                             active: true,
-                            color: '#ff0054'
+                            color: currentTheme.obstacleColor
                         });
 
                         if (Math.random() < 0.3) {
