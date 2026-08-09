@@ -148,11 +148,12 @@ export interface LevelTheme {
   gridColor: string;
   floorColor: string;
   laneColor: string;
-  sceneryType: 'CYBER_CITY' | 'VOLCANIC_INFERNO' | 'MATRIX_JUNGLE' | 'COSMIC_VOID' | 'FROST_REALM';
+  sceneryType: 'CYBER_CITY' | 'VOLCANIC_INFERNO' | 'MATRIX_JUNGLE' | 'COSMIC_VOID' | 'FROST_REALM' | 'QUANTUM_VOID' | 'TITAN_REALM' | 'ULTIMATE_PEAK';
   obstacleColor: string;
   obstacleGlow: string;
   alienColor: string;
   missileColor: string;
+  targetWord: string[];
 }
 
 export const LEVEL_THEMES: LevelTheme[] = [
@@ -175,6 +176,7 @@ export const LEVEL_THEMES: LevelTheme[] = [
     obstacleGlow: "#ff00aa",
     alienColor: "#00ffaa",
     missileColor: "#ff0055",
+    targetWord: ['C', 'Y', 'B', 'E', 'R']
   },
   {
     level: 2,
@@ -195,6 +197,7 @@ export const LEVEL_THEMES: LevelTheme[] = [
     obstacleGlow: "#ffaa00",
     alienColor: "#ff2200",
     missileColor: "#ff8800",
+    targetWord: ['I', 'N', 'F', 'E', 'R', 'N', 'O']
   },
   {
     level: 3,
@@ -215,6 +218,7 @@ export const LEVEL_THEMES: LevelTheme[] = [
     obstacleGlow: "#00ffcc",
     alienColor: "#33ff00",
     missileColor: "#00ffaa",
+    targetWord: ['M', 'A', 'T', 'R', 'I', 'X']
   },
   {
     level: 4,
@@ -235,6 +239,7 @@ export const LEVEL_THEMES: LevelTheme[] = [
     obstacleGlow: "#ff00aa",
     alienColor: "#e0e7ff",
     missileColor: "#ffd700",
+    targetWord: ['G', 'A', 'L', 'A', 'X', 'Y']
   },
   {
     level: 5,
@@ -255,10 +260,84 @@ export const LEVEL_THEMES: LevelTheme[] = [
     obstacleGlow: "#ffffff",
     alienColor: "#80e5ff",
     missileColor: "#00aaff",
+    targetWord: ['C', 'R', 'Y', 'S', 'T', 'A', 'L']
+  },
+  {
+    level: 6,
+    nameAr: "المرحلة 6: الـبـعـد الـكـمـومـي المـظـلـم",
+    nameEn: "STAGE 6: QUANTUM VOID ZONE",
+    bgColor: "#0f0022",
+    fogColor: "#0f0022",
+    ambientColor: "#330066",
+    directionalColor: "#e000ff",
+    pointLightColor: "#00ffff",
+    sunTopColor: "#ff88ff",
+    sunBottomColor: "#4400cc",
+    gridColor: "#aa00ff",
+    floorColor: "#1e0040",
+    laneColor: "#e000ff",
+    sceneryType: "QUANTUM_VOID",
+    obstacleColor: "#e000ff",
+    obstacleGlow: "#00ffff",
+    alienColor: "#f066ff",
+    missileColor: "#00ffff",
+    targetWord: ['Q', 'U', 'A', 'N', 'T', 'U', 'M']
+  },
+  {
+    level: 7,
+    nameAr: "المرحلة 7: عـرش الـعـظـمـاء الأسطوري",
+    nameEn: "STAGE 7: REALM OF ANCIENT TITANS",
+    bgColor: "#1a1200",
+    fogColor: "#1a1200",
+    ambientColor: "#4a3500",
+    directionalColor: "#ffd700",
+    pointLightColor: "#ffaa00",
+    sunTopColor: "#ffffff",
+    sunBottomColor: "#b8860b",
+    gridColor: "#ffd700",
+    floorColor: "#2e2100",
+    laneColor: "#ffe680",
+    sceneryType: "TITAN_REALM",
+    obstacleColor: "#ffd700",
+    obstacleGlow: "#ffffff",
+    alienColor: "#ffec8b",
+    missileColor: "#ff9900",
+    targetWord: ['T', 'I', 'T', 'A', 'N', 'S']
+  },
+  {
+    level: 8,
+    nameAr: "المرحلة 8: الـقـمـة المـطـلـقـة لـلـمـجـرة",
+    nameEn: "STAGE 8: ULTIMATE VICTORY PEAK",
+    bgColor: "#08001a",
+    fogColor: "#08001a",
+    ambientColor: "#2a0055",
+    directionalColor: "#00ffcc",
+    pointLightColor: "#ff0077",
+    sunTopColor: "#ffffff",
+    sunBottomColor: "#00ffaa",
+    gridColor: "#00ffcc",
+    floorColor: "#120033",
+    laneColor: "#ffffff",
+    sceneryType: "ULTIMATE_PEAK",
+    obstacleColor: "#00ffcc",
+    obstacleGlow: "#ff0077",
+    alienColor: "#ffffff",
+    missileColor: "#ff00aa",
+    targetWord: ['V', 'I', 'C', 'T', 'O', 'R', 'Y']
   }
 ];
 
 export const getLevelTheme = (level: number): LevelTheme => {
   const index = Math.max(0, (level - 1) % LEVEL_THEMES.length);
   return LEVEL_THEMES[index];
+};
+
+export const getLevelTargetWord = (level: number): string[] => {
+  return getLevelTheme(level).targetWord;
+};
+
+const VIBRANT_PALETTE = ['#2979ff', '#ff1744', '#ffea00', '#00e676', '#ab47bc', '#ff9100', '#00e5ff'];
+
+export const getLetterColor = (index: number): string => {
+  return VIBRANT_PALETTE[index % VIBRANT_PALETTE.length];
 };

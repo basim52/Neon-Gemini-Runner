@@ -308,6 +308,48 @@ const SideScenery: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
                 </mesh>
               </group>
             )}
+
+            {theme.sceneryType === 'QUANTUM_VOID' && (
+              <group position={[0, 6, 0]}>
+                <mesh castShadow>
+                  <boxGeometry args={[3.5, 8, 3.5]} />
+                  <meshStandardMaterial color="#1a0033" roughness={0.2} metalness={0.8} />
+                </mesh>
+                {/* Quantum Floating Polyhedron */}
+                <mesh position={[0, 5, 0]} rotation={[0.5, 0.5, 0]}>
+                  <icosahedronGeometry args={[2, 0]} />
+                  <meshBasicMaterial color="#e000ff" wireframe />
+                </mesh>
+              </group>
+            )}
+
+            {theme.sceneryType === 'TITAN_REALM' && (
+              <group position={[0, 7, 0]}>
+                <mesh castShadow>
+                  <boxGeometry args={[3, 14, 3]} />
+                  <meshStandardMaterial color="#3a2a00" roughness={0.7} metalness={0.5} />
+                </mesh>
+                {/* Golden Rune Crown */}
+                <mesh position={[0, 7.5, 0]}>
+                  <cylinderGeometry args={[2, 1.5, 1, 8]} />
+                  <meshBasicMaterial color="#ffd700" />
+                </mesh>
+              </group>
+            )}
+
+            {theme.sceneryType === 'ULTIMATE_PEAK' && (
+              <group position={[0, 8, 0]}>
+                <mesh castShadow>
+                  <coneGeometry args={[2.5, 16, 6]} />
+                  <meshStandardMaterial color="#0f002b" roughness={0.1} metalness={0.9} />
+                </mesh>
+                {/* Radiant Rainbow Prism Ring */}
+                <mesh position={[0, 2, 0]} rotation={[Math.PI / 3, 0, 0]}>
+                  <torusGeometry args={[4, 0.2, 16, 32]} />
+                  <meshBasicMaterial color={theme.directionalColor} />
+                </mesh>
+              </group>
+            )}
           </group>
         );
       })}

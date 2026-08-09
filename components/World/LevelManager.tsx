@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { Text3D, Center } from '@react-three/drei';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../../store';
-import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, getLevelTheme } from '../../types';
+import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, getLevelTheme, getLevelTargetWord, getLetterColor } from '../../types';
 import { audio } from '../System/Audio';
 
 // Geometry Constants
@@ -17,6 +17,15 @@ const OBSTACLE_HEIGHT = 1.6;
 const OBSTACLE_GEOMETRY = new THREE.ConeGeometry(0.9, OBSTACLE_HEIGHT, 6);
 const OBSTACLE_GLOW_GEO = new THREE.ConeGeometry(0.9, OBSTACLE_HEIGHT, 6);
 const OBSTACLE_RING_GEO = new THREE.RingGeometry(0.6, 0.9, 6);
+
+// Level-Specific Obstacle Geometries
+const LAVA_ROCK_GEO = new THREE.DodecahedronGeometry(0.95, 0);
+const MATRIX_CUBE_GEO = new THREE.BoxGeometry(1.2, 1.8, 1.2);
+const COSMIC_ASTEROID_GEO = new THREE.IcosahedronGeometry(0.95, 0);
+const ICE_SPIRE_GEO = new THREE.ConeGeometry(0.8, 2.0, 5);
+const QUANTUM_NODE_GEO = new THREE.OctahedronGeometry(0.95, 0);
+const TITAN_PILLAR_GEO = new THREE.CylinderGeometry(0.7, 0.9, 2.2, 6);
+const DIAMOND_PRISM_GEO = new THREE.OctahedronGeometry(1.1, 0);
 
 const GEM_GEOMETRY = new THREE.IcosahedronGeometry(0.3, 0);
 
@@ -469,13 +478,13 @@ export const LevelManager: React.FC = () => {
 
          if (isLetterDue) {
              const lane = getRandomLane(laneCount);
-             const target = ['G','E','M','I','N','I'];
+             const target = getLevelTargetWord(level);
              const availableIndices = target.map((_, i) => i).filter(i => !collectedLetters.includes(i));
 
              if (availableIndices.length > 0) {
                  const chosenIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
                  const val = target[chosenIndex];
-                 const color = GEMINI_COLORS[chosenIndex];
+                 const color = getLetterColor(chosenIndex);
 
                  keptObjects.push({
                     id: uuidv4(),
@@ -645,7 +654,7 @@ const GameEntity: React.FC<{ data: GameObject }> = React.memo(({ data }) => {
     const groupRef = useRef<THREE.Group>(null);
     const visualRef = useRef<THREE.Group>(null);
     const shadowRef = useRef<THREE.Mesh>(null);
-    const { laneCount } = useStore();
+    const { laneCount, level } = useStore();
     
     useFrame((state, delta) => {
         if (groupRef.current) {
@@ -728,15 +737,97 @@ const GameEntity: React.FC<{ data: GameObject }> = React.memo(({ data }) => {
                 {/* OBSTACLE */}
                 {data.type === ObjectType.OBSTACLE && (
                     <group>
-                        <mesh geometry={OBSTACLE_GEOMETRY} castShadow receiveShadow>
-                             <meshStandardMaterial color="#330011" roughness={0.3} metalness={0.8} flatShading={true} />
-                        </mesh>
-                        <mesh scale={[1.02, 1.02, 1.02]} geometry={OBSTACLE_GLOW_GEO}>
-                             <meshBasicMaterial color={data.color} wireframe transparent opacity={0.3} />
-                        </mesh>
-                         <mesh position={[0, -OBSTACLE_HEIGHT/2 + 0.05, 0]} rotation={[-Math.PI/2,0,0]} geometry={OBSTACLE_RING_GEO}>
-                             <meshBasicMaterial color={data.color} transparent opacity={0.4} side={THREE.DoubleSide} />
-                         </mesh>
+                        {level === 1 && (
+                          <>
+                            <mesh geometry={OBSTACLE_GEOMETRY} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#110522" roughness={0.3} metalness={0.8} flatShading={true} />
+                            </mesh>
+                            <mesh scale={[1.02, 1.02, 1.02]} geometry={OBSTACLE_GLOW_GEO}>
+                                 <meshBasicMaterial color={data.color} wireframe transparent opacity={0.35} />
+                            </mesh>
+                            <mesh position={[0, -OBSTACLE_HEIGHT/2 + 0.05, 0]} rotation={[-Math.PI/2,0,0]} geometry={OBSTACLE_RING_GEO}>
+                                 <meshBasicMaterial color={data.color} transparent opacity={0.4} side={THREE.DoubleSide} />
+                            </mesh>
+                          </>
+                        )}
+                        {level === 2 && (
+                          <>
+                            {/* Volcanic Magma Rock */}
+                            <mesh geometry={LAVA_ROCK_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#3a0800" roughness={0.8} metalness={0.2} emissive="#ff3300" emissiveIntensity={0.6} />
+                            </mesh>
+                            <mesh scale={[1.1, 1.1, 1.1]} geometry={LAVA_ROCK_GEO}>
+                                 <meshBasicMaterial color="#ffcc00" wireframe transparent opacity={0.25} />
+                            </mesh>
+                          </>
+                        )}
+                        {level === 3 && (
+                          <>
+                            {/* Cyber Matrix Code Block */}
+                            <mesh geometry={MATRIX_CUBE_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#00220a" roughness={0.4} metalness={0.6} emissive="#00ff66" emissiveIntensity={0.4} />
+                            </mesh>
+                            <mesh scale={[1.05, 1.05, 1.05]} geometry={MATRIX_CUBE_GEO}>
+                                 <meshBasicMaterial color="#00ffcc" wireframe transparent opacity={0.4} />
+                            </mesh>
+                          </>
+                        )}
+                        {level === 4 && (
+                          <>
+                            {/* Cosmic Nebula Asteroid */}
+                            <mesh geometry={COSMIC_ASTEROID_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#1a0033" roughness={0.5} metalness={0.7} emissive="#ff00aa" emissiveIntensity={0.5} />
+                            </mesh>
+                            <mesh rotation={[Math.PI/4, 0, 0]}>
+                                 <torusGeometry args={[1.5, 0.05, 16, 32]} />
+                                 <meshBasicMaterial color="#ffd700" />
+                            </mesh>
+                          </>
+                        )}
+                        {level === 5 && (
+                          <>
+                            {/* Glacial Frost Spire */}
+                            <mesh geometry={ICE_SPIRE_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#003355" roughness={0.1} metalness={0.9} emissive="#00d3ff" emissiveIntensity={0.7} />
+                            </mesh>
+                            <mesh scale={[1.08, 1.08, 1.08]} geometry={ICE_SPIRE_GEO}>
+                                 <meshBasicMaterial color="#ffffff" wireframe transparent opacity={0.4} />
+                            </mesh>
+                          </>
+                        )}
+                        {level === 6 && (
+                          <>
+                            {/* Quantum Distortion Node */}
+                            <mesh geometry={QUANTUM_NODE_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#220044" roughness={0.2} metalness={0.8} emissive="#e000ff" emissiveIntensity={0.8} />
+                            </mesh>
+                            <mesh scale={[1.1, 1.1, 1.1]} geometry={QUANTUM_NODE_GEO}>
+                                 <meshBasicMaterial color="#00ffff" wireframe transparent opacity={0.5} />
+                            </mesh>
+                          </>
+                        )}
+                        {level === 7 && (
+                          <>
+                            {/* Titan Pillar */}
+                            <mesh geometry={TITAN_PILLAR_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#3a2a00" roughness={0.6} metalness={0.8} emissive="#ffd700" emissiveIntensity={0.6} />
+                            </mesh>
+                            <mesh scale={[1.05, 1.05, 1.05]} geometry={TITAN_PILLAR_GEO}>
+                                 <meshBasicMaterial color="#ffffff" wireframe transparent opacity={0.3} />
+                            </mesh>
+                          </>
+                        )}
+                        {(level >= 8) && (
+                          <>
+                            {/* Diamond Prism */}
+                            <mesh geometry={DIAMOND_PRISM_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#003344" roughness={0.1} metalness={0.9} emissive="#00ffcc" emissiveIntensity={0.9} />
+                            </mesh>
+                            <mesh scale={[1.12, 1.12, 1.12]} geometry={DIAMOND_PRISM_GEO}>
+                                 <meshBasicMaterial color="#ff00aa" wireframe transparent opacity={0.5} />
+                            </mesh>
+                          </>
+                        )}
                     </group>
                 )}
 
@@ -744,19 +835,19 @@ const GameEntity: React.FC<{ data: GameObject }> = React.memo(({ data }) => {
                 {data.type === ObjectType.SLIDING_BARRIER && (
                     <group>
                         <mesh geometry={SLIDING_BARRIER_GEO} castShadow>
-                             <meshStandardMaterial color="#ff00aa" emissive="#ff00aa" emissiveIntensity={0.8} metalness={0.9} />
+                             <meshStandardMaterial color={data.color || "#ff00aa"} emissive={data.color || "#ff00aa"} emissiveIntensity={0.8} metalness={0.9} />
                         </mesh>
                     </group>
                 )}
 
-                {/* ALIEN */}
+                {/* ALIEN / ENEMY */}
                 {data.type === ObjectType.ALIEN && (
                     <group>
                         <mesh castShadow geometry={ALIEN_BODY_GEO}>
-                            <meshStandardMaterial color="#4400cc" metalness={0.8} roughness={0.2} />
+                            <meshStandardMaterial color={data.color || "#4400cc"} metalness={0.8} roughness={0.2} />
                         </mesh>
                         <mesh position={[0, 0.2, 0]} geometry={ALIEN_DOME_GEO}>
-                            <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} transparent opacity={0.8} />
+                            <meshStandardMaterial color={data.color || "#00ff00"} emissive={data.color || "#00ff00"} emissiveIntensity={0.6} transparent opacity={0.85} />
                         </mesh>
                         <mesh position={[0.3, 0, 0.3]} geometry={ALIEN_EYE_GEO}>
                              <meshBasicMaterial color="#ff00ff" />

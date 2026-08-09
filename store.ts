@@ -4,7 +4,7 @@
 */
 
 import { create } from 'zustand';
-import { GameStatus, RUN_SPEED_BASE, PlayerSkin } from './types';
+import { GameStatus, RUN_SPEED_BASE, PlayerSkin, getLevelTargetWord } from './types';
 
 interface GameState {
   status: GameStatus;
@@ -37,6 +37,7 @@ interface GameState {
   // Customization
   activeSkin: PlayerSkin;
   unlockedSkins: PlayerSkin[];
+  activeShopTab: 'UPGRADES' | 'SKINS' | 'ACHIEVEMENTS';
 
   // Sound & Music Toggles
   isMuted: boolean;
@@ -55,7 +56,7 @@ interface GameState {
   // Shop & Upgrades
   buyItem: (type: string, cost: number) => boolean;
   advanceLevel: () => void;
-  openShop: () => void;
+  openShop: (tab?: 'UPGRADES' | 'SKINS' | 'ACHIEVEMENTS') => void;
   closeShop: () => void;
   activateImmortality: () => void;
   activateMagnet: () => void;
@@ -66,8 +67,7 @@ interface GameState {
   toggleMusic: () => void;
 }
 
-const GEMINI_TARGET = ['G', 'E', 'M', 'I', 'N', 'I'];
-const MAX_LEVEL = 5;
+const MAX_LEVEL = 8;
 
 // Helper to safely read localStorage
 const getStoredNum = (key: string, fallback: number): number => {
@@ -116,6 +116,10 @@ export const useStore = create<GameState>((set, get) => ({
 
   activeSkin: (localStorage.getItem('gemini_runner_skin') as PlayerSkin) || PlayerSkin.ROBLOX_CLASSIC,
   unlockedSkins: getStoredJSON('gemini_runner_skins', [PlayerSkin.ROBLOX_CLASSIC]),
+  activeShopTab: 'UPGRADES',
+
+  openShop: (tab: 'UPGRADES' | 'SKINS' | 'ACHIEVEMENTS' = 'UPGRADES') => set({ status: GameStatus.SHOP, activeShopTab: tab }),
+  closeShop: () => set({ status: GameStatus.PLAYING }),
 
   isMuted: false,
   isMusicPlaying: true,
@@ -220,6 +224,7 @@ export const useStore = create<GameState>((set, get) => ({
 
   collectLetter: (index) => {
     const { collectedLetters, level, speed } = get();
+    const targetWord = getLevelTargetWord(level);
     
     if (!collectedLetters.includes(index)) {
       const newLetters = [...collectedLetters, index];
@@ -231,11 +236,11 @@ export const useStore = create<GameState>((set, get) => ({
         speed: nextSpeed
       });
 
-      if (newLetters.length === GEMINI_TARGET.length) {
+      if (newLetters.length === targetWord.length) {
         if (level < MAX_LEVEL) {
             get().advanceLevel();
         } else {
-            const finalScore = get().score + 5000;
+            const finalScore = get().score + 10000;
             const { highScore } = get();
             const newHigh = Math.max(highScore, finalScore);
             try { localStorage.setItem('gemini_runner_highscore', newHigh.toString()); } catch {}
@@ -264,9 +269,6 @@ export const useStore = create<GameState>((set, get) => ({
           collectedLetters: []
       });
   },
-
-  openShop: () => set({ status: GameStatus.SHOP }),
-  closeShop: () => set({ status: GameStatus.PLAYING }),
 
   buyItem: (type, cost) => {
       const { score, maxLives, lives, blasterAmmo } = get();
