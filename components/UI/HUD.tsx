@@ -430,7 +430,7 @@ export const HUD: React.FC = () => {
         </div>
 
         {/* On-Screen Touch / Mobile Controls */}
-        <div className="w-full flex justify-between items-end pb-3 px-1 pointer-events-auto z-40">
+        <div className="w-full flex justify-between items-end pb-10 sm:pb-14 px-3 pointer-events-auto z-40">
              {/* Left side: Directional Touch Controls */}
              <div className="flex space-x-2 sm:space-x-3 dir-rtl">
                  <button 
