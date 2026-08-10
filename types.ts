@@ -7,9 +7,16 @@
 export enum GameStatus {
   MENU = 'MENU',
   PLAYING = 'PLAYING',
+  PAUSED = 'PAUSED',
   SHOP = 'SHOP',
   GAME_OVER = 'GAME_OVER',
   VICTORY = 'VICTORY'
+}
+
+export enum GraphicsQuality {
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW'
 }
 
 export enum ObjectType {
@@ -341,3 +348,74 @@ const VIBRANT_PALETTE = ['#2979ff', '#ff1744', '#ffea00', '#00e676', '#ab47bc', 
 export const getLetterColor = (index: number): string => {
   return VIBRANT_PALETTE[index % VIBRANT_PALETTE.length];
 };
+
+export interface Mission {
+  id: string;
+  titleAr: string;
+  descAr: string;
+  target: number;
+  current: number;
+  rewardGems: number;
+  isCompleted: boolean;
+  isClaimed: boolean;
+  type: 'GEMS' | 'DISTANCE' | 'COMBO' | 'LEVEL' | 'FEVER';
+}
+
+export const INITIAL_MISSIONS: Mission[] = [
+  {
+    id: 'm_gems_50',
+    titleAr: 'صائد الجواهر',
+    descAr: 'اجمع 50 جوهرة',
+    target: 50,
+    current: 0,
+    rewardGems: 150,
+    isCompleted: false,
+    isClaimed: false,
+    type: 'GEMS'
+  },
+  {
+    id: 'm_dist_500',
+    titleAr: 'العداء السريع',
+    descAr: 'اقطع مسافة 500 متر',
+    target: 500,
+    current: 0,
+    rewardGems: 200,
+    isCompleted: false,
+    isClaimed: false,
+    type: 'DISTANCE'
+  },
+  {
+    id: 'm_combo_10',
+    titleAr: 'سيد الكومبو',
+    descAr: 'حقّق كومبو 10x متتالي',
+    target: 10,
+    current: 0,
+    rewardGems: 250,
+    isCompleted: false,
+    isClaimed: false,
+    type: 'COMBO'
+  },
+  {
+    id: 'm_level_2',
+    titleAr: 'مستكشف العوالم',
+    descAr: 'وصل إلى المرحلة 2',
+    target: 2,
+    current: 0,
+    rewardGems: 300,
+    isCompleted: false,
+    isClaimed: false,
+    type: 'LEVEL'
+  },
+  {
+    id: 'm_fever_1',
+    titleAr: 'اشتعل بالحماس!',
+    descAr: 'فعّل وضع Fever Mode مرة واحدة',
+    target: 1,
+    current: 0,
+    rewardGems: 350,
+    isCompleted: false,
+    isClaimed: false,
+    type: 'FEVER'
+  }
+];
+

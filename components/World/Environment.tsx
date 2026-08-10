@@ -7,11 +7,13 @@ import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../../store';
-import { LANE_WIDTH, getLevelTheme, LevelTheme } from '../../types';
+import { LANE_WIDTH, getLevelTheme, LevelTheme, GraphicsQuality } from '../../types';
 
 const StarField: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
   const speed = useStore(state => state.speed);
-  const count = 3000;
+  const graphicsQuality = useStore(state => state.graphicsQuality);
+  
+  const count = graphicsQuality === GraphicsQuality.HIGH ? 2000 : graphicsQuality === GraphicsQuality.MEDIUM ? 1000 : 350;
   const meshRef = useRef<THREE.Points>(null);
   
   const positions = useMemo(() => {
@@ -84,6 +86,7 @@ const StarField: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
 
 const LaneGuides: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
     const { laneCount } = useStore();
+    const lightStripsRef = useRef<THREE.Group>(null);
     
     const separators = useMemo(() => {
         const lines: number[] = [];
@@ -95,22 +98,52 @@ const LaneGuides: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
         return lines;
     }, [laneCount]);
 
+    const totalWidth = laneCount * LANE_WIDTH;
+
+    useFrame((state) => {
+        if (lightStripsRef.current) {
+            const pulse = 0.6 + Math.sin(state.clock.elapsedTime * 6) * 0.4;
+            lightStripsRef.current.children.forEach((child) => {
+                const mesh = child as THREE.Mesh;
+                if (mesh.material) {
+                    (mesh.material as THREE.MeshBasicMaterial).opacity = 0.7 * pulse;
+                }
+            });
+        }
+    });
+
     return (
         <group position={[0, 0.02, 0]}>
             {/* Lane Floor */}
             <mesh position={[0, -0.02, -20]} rotation={[-Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[laneCount * LANE_WIDTH, 200]} />
-                <meshBasicMaterial color={theme.floorColor} transparent opacity={0.92} />
+                <planeGeometry args={[totalWidth, 220]} />
+                <meshStandardMaterial 
+                    color={theme.floorColor} 
+                    roughness={0.2}
+                    metalness={0.8}
+                />
             </mesh>
+
+            {/* Outer Glowing Neon Borders */}
+            <group ref={lightStripsRef}>
+                <mesh position={[-totalWidth / 2 - 0.1, 0.03, -20]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <planeGeometry args={[0.2, 220]} />
+                    <meshBasicMaterial color={theme.directionalColor} transparent opacity={0.85} />
+                </mesh>
+                <mesh position={[totalWidth / 2 + 0.1, 0.03, -20]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <planeGeometry args={[0.2, 220]} />
+                    <meshBasicMaterial color={theme.directionalColor} transparent opacity={0.85} />
+                </mesh>
+            </group>
 
             {/* Lane Separators */}
             {separators.map((x, i) => (
                 <mesh key={`sep-${i}`} position={[x, 0, -20]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <planeGeometry args={[0.06, 200]} /> 
+                    <planeGeometry args={[0.07, 220]} /> 
                     <meshBasicMaterial 
                         color={theme.laneColor} 
                         transparent 
-                        opacity={0.5} 
+                        opacity={0.6} 
                     />
                 </mesh>
             ))}
@@ -359,16 +392,39 @@ const SideScenery: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
 
 export const Environment: React.FC = () => {
   const level = useStore(state => state.level);
+  const graphicsQuality = useStore(state => state.graphicsQuality);
   const theme = getLevelTheme(level);
+
+  const isHigh = graphicsQuality === GraphicsQuality.HIGH;
+  const isLow = graphicsQuality === GraphicsQuality.LOW;
 
   return (
     <>
       <color attach="background" args={[theme.bgColor]} />
-      <fog attach="fog" args={[theme.fogColor, 40, 160]} />
+      <fog attach="fog" args={[theme.fogColor, isLow ? 25 : 35, isLow ? 120 : 170]} />
       
-      <ambientLight intensity={0.3} color={theme.ambientColor} />
-      <directionalLight position={[0, 20, -10]} intensity={1.5} color={theme.directionalColor} />
-      <pointLight position={[0, 25, -150]} intensity={2.5} color={theme.pointLightColor} distance={220} decay={2} />
+      <ambientLight intensity={isLow ? 0.6 : 0.45} color={theme.ambientColor} />
+      
+      {/* Dynamic Key Directional Light */}
+      <directionalLight 
+        position={[10, 30, -20]} 
+        intensity={1.8} 
+        color={theme.directionalColor} 
+        castShadow={isHigh} 
+      />
+      
+      {/* Rim Light for Cyber Backlighting */}
+      {!isLow && (
+        <directionalLight position={[-15, 10, 30]} intensity={1.2} color={theme.pointLightColor} />
+      )}
+      
+      {/* Horizon Point Light */}
+      <pointLight position={[0, 25, -160]} intensity={isLow ? 2.0 : 3.5} color={theme.pointLightColor} distance={250} decay={2} />
+      
+      {/* Player Runner Area Fill Light */}
+      {!isLow && (
+        <pointLight position={[0, 10, 0]} intensity={1.2} color={theme.laneColor} distance={30} decay={2} />
+      )}
       
       <StarField theme={theme} />
       <MovingGrid theme={theme} />

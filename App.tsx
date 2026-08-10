@@ -13,6 +13,7 @@ import { LevelManager } from './components/World/LevelManager';
 import { Effects } from './components/World/Effects';
 import { HUD } from './components/UI/HUD';
 import { useStore } from './store';
+import { GraphicsQuality } from './types';
 
 // Dynamic Camera Controller
 const CameraController = () => {
@@ -68,13 +69,27 @@ function Scene() {
 }
 
 function App() {
+  const graphicsQuality = useStore((s) => s.graphicsQuality);
+
+  const dpr: [number, number] | number = 
+    graphicsQuality === GraphicsQuality.HIGH ? [1, 2] :
+    graphicsQuality === GraphicsQuality.MEDIUM ? [1, 1.5] : 1;
+
+  const isShadows = graphicsQuality === GraphicsQuality.HIGH;
+  const isAntialias = graphicsQuality !== GraphicsQuality.LOW;
+
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden select-none">
       <HUD />
       <Canvas
-        shadows
-        dpr={[1, 1.5]} 
-        gl={{ antialias: false, stencil: false, depth: true, powerPreference: "high-performance" }}
+        shadows={isShadows}
+        dpr={dpr} 
+        gl={{ 
+          antialias: isAntialias, 
+          stencil: false, 
+          depth: true, 
+          powerPreference: graphicsQuality === GraphicsQuality.LOW ? "low-power" : "high-performance" 
+        }}
         // Initial camera, matches the controller base
         camera={{ position: [0, 5.5, 8], fov: 60 }}
       >

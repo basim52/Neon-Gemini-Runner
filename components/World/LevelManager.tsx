@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { Text3D, Center } from '@react-three/drei';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../../store';
-import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, getLevelTheme, getLevelTargetWord, getLetterColor } from '../../types';
+import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, getLevelTheme, getLevelTargetWord, getLetterColor, GraphicsQuality } from '../../types';
 import { audio } from '../System/Audio';
 
 // Geometry Constants
@@ -60,7 +60,7 @@ const SHOP_BACK_GEO = new THREE.BoxGeometry(1, 5, 1.2);
 const SHOP_OUTLINE_GEO = new THREE.BoxGeometry(1, 7.2, 0.8);
 const SHOP_FLOOR_GEO = new THREE.PlaneGeometry(1, 4);
 
-const PARTICLE_COUNT = 600;
+const PARTICLE_COUNT = 1200;
 const BASE_LETTER_INTERVAL = 150; 
 
 const getLetterInterval = (level: number) => {
@@ -72,46 +72,80 @@ const LASER_SHOT_SPEED = 80;
 
 const FONT_URL = "https://cdn.jsdelivr.net/npm/three/examples/fonts/helvetiker_bold.typeface.json";
 
-// Particle System
+// High-Performance Dynamic Particle System
 const ParticleSystem: React.FC = () => {
+    const graphicsQuality = useStore((s) => s.graphicsQuality);
     const mesh = useRef<THREE.InstancedMesh>(null);
     const dummy = useMemo(() => new THREE.Object3D(), []);
     
     const particles = useMemo(() => new Array(PARTICLE_COUNT).fill(0).map(() => ({
         life: 0,
+        maxLife: 1.0,
         pos: new THREE.Vector3(),
         vel: new THREE.Vector3(),
         rot: new THREE.Vector3(),
         rotVel: new THREE.Vector3(),
-        color: new THREE.Color()
+        color: new THREE.Color(),
+        size: 0.3,
+        pType: 'spark' // 'spark' | 'debris' | 'pickup' | 'boost'
     })), []);
 
     useEffect(() => {
         const handleExplosion = (e: CustomEvent) => {
-            const { position, color } = e.detail;
+            const { position, color, type = 'spark', count = 50 } = e.detail;
             let spawned = 0;
-            const burstAmount = 40; 
+            const qualityMult = graphicsQuality === GraphicsQuality.LOW ? 0.25 : graphicsQuality === GraphicsQuality.MEDIUM ? 0.6 : 1.0;
+            const burstAmount = Math.max(5, Math.floor(count * qualityMult)); 
 
             for(let i = 0; i < PARTICLE_COUNT; i++) {
                 const p = particles[i];
                 if (p.life <= 0) {
-                    p.life = 1.0 + Math.random() * 0.5; 
-                    p.pos.set(position[0], position[1], position[2]);
+                    p.pType = type;
+                    p.pos.set(position[0], position[1] ?? 0.5, position[2]);
                     
-                    const theta = Math.random() * Math.PI * 2;
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const speed = 2 + Math.random() * 10;
-                    
-                    p.vel.set(
-                        Math.sin(phi) * Math.cos(theta),
-                        Math.sin(phi) * Math.sin(theta),
-                        Math.cos(phi)
-                    ).multiplyScalar(speed);
+                    if (type === 'pickup') {
+                        // Upward fountain starburst for gems and letters
+                        p.life = 0.8 + Math.random() * 0.6;
+                        p.maxLife = p.life;
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = 3 + Math.random() * 8;
+                        p.vel.set(
+                            Math.cos(angle) * speed,
+                            4 + Math.random() * 8, // Upward launch
+                            Math.sin(angle) * speed
+                        );
+                        p.size = 0.2 + Math.random() * 0.3;
+                    } else if (type === 'boost') {
+                        // Forward energy stream for boost pads
+                        p.life = 0.6 + Math.random() * 0.4;
+                        p.maxLife = p.life;
+                        p.vel.set(
+                            (Math.random() - 0.5) * 6,
+                            2 + Math.random() * 6,
+                            8 + Math.random() * 12 // Forward velocity
+                        );
+                        p.size = 0.3 + Math.random() * 0.3;
+                    } else {
+                        // Radial explosion debris
+                        p.life = 1.0 + Math.random() * 0.6;
+                        p.maxLife = p.life;
+                        const theta = Math.random() * Math.PI * 2;
+                        const phi = Math.acos(2 * Math.random() - 1);
+                        const speed = 4 + Math.random() * 14;
+                        p.vel.set(
+                            Math.sin(phi) * Math.cos(theta),
+                            Math.sin(phi) * Math.sin(theta),
+                            Math.cos(phi)
+                        ).multiplyScalar(speed);
+                        p.size = 0.35 + Math.random() * 0.4;
+                    }
 
                     p.rot.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-                    p.rotVel.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).multiplyScalar(5);
+                    p.rotVel.set((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
                     
-                    p.color.set(color);
+                    // Boost color intensity for glowing post-processing bloom!
+                    const col = new THREE.Color(color);
+                    p.color.setRGB(col.r * 2.5, col.g * 2.5, col.b * 2.5);
                     
                     spawned++;
                     if (spawned >= burstAmount) break;
@@ -129,16 +163,27 @@ const ParticleSystem: React.FC = () => {
 
         particles.forEach((p, i) => {
             if (p.life > 0) {
-                p.life -= safeDelta * 1.5;
+                p.life -= safeDelta * 1.6;
                 p.pos.addScaledVector(p.vel, safeDelta);
-                p.vel.y -= safeDelta * 5; 
-                p.vel.multiplyScalar(0.98);
+
+                if (p.pType === 'pickup') {
+                    p.vel.y -= safeDelta * 12; // Gravity
+                    p.vel.multiplyScalar(0.95);
+                } else if (p.pType === 'boost') {
+                    p.vel.multiplyScalar(0.92);
+                } else {
+                    p.vel.y -= safeDelta * 16; // Heavy gravity for debris
+                    p.vel.multiplyScalar(0.96);
+                }
 
                 p.rot.x += p.rotVel.x * safeDelta;
                 p.rot.y += p.rotVel.y * safeDelta;
                 
                 dummy.position.copy(p.pos);
-                const scale = Math.max(0, p.life * 0.25);
+                
+                // Smooth scale fade based on remaining life
+                const lifeProgress = Math.max(0, p.life / p.maxLife);
+                const scale = lifeProgress * p.size;
                 dummy.scale.set(scale, scale, scale);
                 
                 dummy.rotation.set(p.rot.x, p.rot.y, p.rot.z);
@@ -160,7 +205,7 @@ const ParticleSystem: React.FC = () => {
     return (
         <instancedMesh ref={mesh} args={[undefined, undefined, PARTICLE_COUNT]}>
             <octahedronGeometry args={[0.5, 0]} />
-            <meshBasicMaterial toneMapped={false} transparent opacity={0.9} />
+            <meshBasicMaterial toneMapped={false} transparent opacity={0.95} />
         </instancedMesh>
     );
 };
@@ -348,7 +393,7 @@ export const LevelManager: React.FC = () => {
                 hasChanges = true;
                 audio.playExplosion();
                 window.dispatchEvent(new CustomEvent('particle-burst', { 
-                  detail: { position: target.position, color: '#ffff00' } 
+                  detail: { position: target.position, color: '#ffff00', type: 'explosion', count: 60 } 
                 }));
                 useStore.getState().addScore(150);
                 break;
@@ -400,7 +445,7 @@ export const LevelManager: React.FC = () => {
                              hasChanges = true;
                              if (obj.type === ObjectType.MISSILE || obj.type === ObjectType.SLIDING_BARRIER) {
                                 window.dispatchEvent(new CustomEvent('particle-burst', { 
-                                    detail: { position: obj.position, color: '#ff4400' } 
+                                    detail: { position: obj.position, color: '#ff4400', type: 'explosion', count: 70 } 
                                 }));
                              }
                          }
@@ -411,7 +456,7 @@ export const LevelManager: React.FC = () => {
                          obj.active = false;
                          hasChanges = true;
                          window.dispatchEvent(new CustomEvent('particle-burst', { 
-                            detail: { position: obj.position, color: '#00ff88' } 
+                            detail: { position: obj.position, color: '#00ff88', type: 'boost', count: 45 } 
                          }));
                      } else {
                          // Items
@@ -434,7 +479,9 @@ export const LevelManager: React.FC = () => {
                             window.dispatchEvent(new CustomEvent('particle-burst', { 
                                 detail: { 
                                     position: obj.position, 
-                                    color: obj.color || '#ffffff' 
+                                    color: obj.color || '#00ffff',
+                                    type: 'pickup',
+                                    count: 45 
                                 } 
                             }));
 

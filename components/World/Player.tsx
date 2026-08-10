@@ -28,6 +28,12 @@ const TORSO_GEO = new THREE.BoxGeometry(0.5, 0.65, 0.28);
 const ZIPPER_GEO = new THREE.PlaneGeometry(0.02, 0.62);
 const LOGO_TAG_GEO = new THREE.PlaneGeometry(0.12, 0.05);
 
+// Jetpack & Thruster Geometries
+const JETPACK_BODY_GEO = new THREE.BoxGeometry(0.32, 0.38, 0.16);
+const JETPACK_NOZZLE_GEO = new THREE.CylinderGeometry(0.06, 0.08, 0.18, 12);
+const THRUSTER_FLAME_GEO = new THREE.ConeGeometry(0.07, 0.45, 12);
+const IMMORTAL_HALO_GEO = new THREE.TorusGeometry(0.4, 0.03, 16, 32);
+
 // Limbs
 const ARM_GEO = new THREE.BoxGeometry(0.2, 0.42, 0.2);
 const HAND_GEO = new THREE.BoxGeometry(0.19, 0.18, 0.19);
@@ -46,6 +52,9 @@ export const Player: React.FC = () => {
   const shadowRef = useRef<THREE.Mesh>(null);
   const droneRef = useRef<THREE.Group>(null);
   const magnetAuraRef = useRef<THREE.Mesh>(null);
+  const thrusterFlame1Ref = useRef<THREE.Mesh>(null);
+  const thrusterFlame2Ref = useRef<THREE.Mesh>(null);
+  const immortalHaloRef = useRef<THREE.Mesh>(null);
   
   // Roblox Character Limb Refs for Animation
   const leftArmRef = useRef<THREE.Group>(null);
@@ -96,7 +105,9 @@ export const Player: React.FC = () => {
     soleMaterial,
     faceDetailMaterial, 
     whiteDetailMaterial,
-    shadowMaterial
+    shadowMaterial,
+    jetpackMaterial,
+    thrusterMaterial
   } = useMemo(() => {
       const isGolden = isImmortalityActive;
       const jacketColor = isGolden ? '#ffd700' : skinInfo.color;
@@ -106,15 +117,29 @@ export const Player: React.FC = () => {
       const pantColor = isGolden ? '#332200' : skinInfo.pantColor;
 
       return {
-          skinMaterial: new THREE.MeshStandardMaterial({ color: skinTone, roughness: 0.6, metalness: 0.1 }),
-          jacketMaterial: new THREE.MeshStandardMaterial({ color: jacketColor, roughness: 0.5, metalness: 0.2 }),
+          skinMaterial: new THREE.MeshStandardMaterial({ 
+              color: skinTone, 
+              roughness: 0.5, 
+              metalness: isGolden ? 0.8 : 0.1,
+              emissive: isGolden ? '#ffaa00' : '#000000',
+              emissiveIntensity: isGolden ? 0.3 : 0
+          }),
+          jacketMaterial: new THREE.MeshStandardMaterial({ 
+              color: jacketColor, 
+              roughness: 0.3, 
+              metalness: 0.3,
+              emissive: glowColor,
+              emissiveIntensity: isGolden ? 0.6 : 0.25
+          }),
           pantsMaterial: new THREE.MeshStandardMaterial({ color: pantColor, roughness: 0.6, metalness: 0.1 }),
-          hairMaterial: new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8, metalness: 0.1 }),
+          hairMaterial: new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.7, metalness: 0.2 }),
           shoeMaterial: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.3, metalness: 0.1 }),
           soleMaterial: new THREE.MeshStandardMaterial({ color: '#222222', roughness: 0.8 }),
           faceDetailMaterial: new THREE.MeshBasicMaterial({ color: '#111111' }),
-          whiteDetailMaterial: new THREE.MeshBasicMaterial({ color: glowColor }),
-          shadowMaterial: new THREE.MeshBasicMaterial({ color: '#000000', opacity: 0.35, transparent: true })
+          whiteDetailMaterial: new THREE.MeshStandardMaterial({ color: glowColor, emissive: glowColor, emissiveIntensity: 0.8 }),
+          shadowMaterial: new THREE.MeshBasicMaterial({ color: '#000000', opacity: 0.35, transparent: true }),
+          jetpackMaterial: new THREE.MeshStandardMaterial({ color: '#111827', roughness: 0.2, metalness: 0.8 }),
+          thrusterMaterial: new THREE.MeshBasicMaterial({ color: isGolden ? '#ffee00' : glowColor, transparent: true, opacity: 0.9 })
       };
   }, [isImmortalityActive, skinInfo]);
 
@@ -316,6 +341,21 @@ export const Player: React.FC = () => {
       magnetAuraRef.current.scale.setScalar(pulse);
     }
 
+    // 6. Cyber Thrusters & Jetpack Flame Pulse
+    const flameFlicker = 0.8 + Math.random() * 0.4 + (isJumping.current ? 0.6 : 0);
+    if (thrusterFlame1Ref.current) {
+        thrusterFlame1Ref.current.scale.set(flameFlicker, flameFlicker * 1.3, flameFlicker);
+    }
+    if (thrusterFlame2Ref.current) {
+        thrusterFlame2Ref.current.scale.set(flameFlicker, flameFlicker * 1.3, flameFlicker);
+    }
+
+    // 7. Immortal Halo Torus Rotation
+    if (immortalHaloRef.current) {
+        immortalHaloRef.current.rotation.x += delta * 3;
+        immortalHaloRef.current.rotation.y += delta * 2;
+    }
+
     // Dynamic Shadow
     if (shadowRef.current) {
         const height = groupRef.current.position.y;
@@ -333,7 +373,7 @@ export const Player: React.FC = () => {
     const showFlicker = isInvincible.current || isImmortalityActive;
     if (showFlicker) {
         if (isInvincible.current) {
-             if (Date.now() - lastDamageTime.current > 1500) {
+             if (Date.now() - lastDamageTime.current > 2200) {
                 isInvincible.current = false;
                 groupRef.current.visible = true;
              } else {
@@ -387,6 +427,29 @@ export const Player: React.FC = () => {
         {/* Zipper details & ROBLOX chest logo tag */}
         <mesh position={[0, 0.32, 0.142]} geometry={ZIPPER_GEO} material={whiteDetailMaterial} />
         <mesh position={[-0.12, 0.42, 0.142]} geometry={LOGO_TAG_GEO} material={whiteDetailMaterial} />
+
+        {/* Cyber Jetpack & Twin Thrusters */}
+        <group position={[0, 0.32, -0.2]}>
+            {/* Jetpack Main Box */}
+            <mesh geometry={JETPACK_BODY_GEO} material={jetpackMaterial} />
+            {/* Left Nozzle & Flame */}
+            <group position={[-0.1, -0.2, 0]}>
+                <mesh geometry={JETPACK_NOZZLE_GEO} material={jetpackMaterial} />
+                <mesh ref={thrusterFlame1Ref} position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]} geometry={THRUSTER_FLAME_GEO} material={thrusterMaterial} />
+            </group>
+            {/* Right Nozzle & Flame */}
+            <group position={[0.1, -0.2, 0]}>
+                <mesh geometry={JETPACK_NOZZLE_GEO} material={jetpackMaterial} />
+                <mesh ref={thrusterFlame2Ref} position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]} geometry={THRUSTER_FLAME_GEO} material={thrusterMaterial} />
+            </group>
+        </group>
+
+        {/* Rotating Energy Halo Ring (Active when Immortality is on) */}
+        {isImmortalityActive && (
+            <mesh ref={immortalHaloRef} position={[0, 0.32, 0]} geometry={IMMORTAL_HALO_GEO}>
+                <meshBasicMaterial color="#ffee00" transparent opacity={0.85} side={THREE.DoubleSide} />
+            </mesh>
+        )}
 
         {/* Roblox Head */}
         <group ref={headRef} position={[0, 0.82, 0]}>

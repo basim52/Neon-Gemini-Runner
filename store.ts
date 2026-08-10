@@ -4,7 +4,7 @@
 */
 
 import { create } from 'zustand';
-import { GameStatus, RUN_SPEED_BASE, PlayerSkin, getLevelTargetWord } from './types';
+import { GameStatus, RUN_SPEED_BASE, PlayerSkin, GraphicsQuality, getLevelTargetWord, Mission, INITIAL_MISSIONS } from './types';
 
 interface GameState {
   status: GameStatus;
@@ -18,6 +18,18 @@ interface GameState {
   gemsCollected: number;
   distance: number;
   
+  // Graphics Settings (High / Medium / Low)
+  graphicsQuality: GraphicsQuality;
+
+  // Combo & Fever Mode System
+  comboCount: number;
+  comboMultiplier: number;
+  feverMeter: number; // 0 to 100
+  isFeverMode: boolean;
+
+  // Daily Missions & Achievements
+  missions: Mission[];
+
   // High Scores & Records
   highScore: number;
   bestDistance: number;
@@ -65,6 +77,9 @@ interface GameState {
   selectSkin: (skin: PlayerSkin) => void;
   toggleMute: () => void;
   toggleMusic: () => void;
+  setGraphicsQuality: (quality: GraphicsQuality) => void;
+  claimMissionReward: (missionId: string) => void;
+  updateMissionProgress: (type: 'GEMS' | 'DISTANCE' | 'COMBO' | 'LEVEL' | 'FEVER', amount: number) => void;
 }
 
 const MAX_LEVEL = 8;
@@ -91,8 +106,8 @@ const getStoredJSON = <T>(key: string, fallback: T): T => {
 export const useStore = create<GameState>((set, get) => ({
   status: GameStatus.MENU,
   score: 0,
-  lives: 3,
-  maxLives: 3,
+  lives: 5,
+  maxLives: 5,
   speed: 0,
   collectedLetters: [],
   level: 1,
@@ -100,19 +115,28 @@ export const useStore = create<GameState>((set, get) => ({
   gemsCollected: 0,
   distance: 0,
   
+  graphicsQuality: (localStorage.getItem('gemini_runner_graphics') as GraphicsQuality) || GraphicsQuality.HIGH,
+
+  comboCount: 0,
+  comboMultiplier: 1,
+  feverMeter: 0,
+  isFeverMode: false,
+
+  missions: getStoredJSON('gemini_runner_missions', INITIAL_MISSIONS),
+
   highScore: getStoredNum('gemini_runner_highscore', 0),
   bestDistance: getStoredNum('gemini_runner_best_distance', 0),
   totalGems: getStoredNum('gemini_runner_total_gems', 0),
 
-  hasDoubleJump: false,
+  hasDoubleJump: true,
   hasImmortality: false,
   isImmortalityActive: false,
   hasMagnet: false,
   isMagnetActive: false,
-  hasBlaster: false,
-  blasterAmmo: 0,
-  hasShieldDrone: false,
-  isShieldDroneActive: false,
+  hasBlaster: true,
+  blasterAmmo: 5,
+  hasShieldDrone: true,
+  isShieldDroneActive: true,
 
   activeSkin: (localStorage.getItem('gemini_runner_skin') as PlayerSkin) || PlayerSkin.ROBLOX_CLASSIC,
   unlockedSkins: getStoredJSON('gemini_runner_skins', [PlayerSkin.ROBLOX_CLASSIC]),
@@ -127,59 +151,78 @@ export const useStore = create<GameState>((set, get) => ({
   startGame: () => set({ 
     status: GameStatus.PLAYING, 
     score: 0, 
-    lives: 3, 
-    maxLives: 3,
+    lives: 5, 
+    maxLives: 5,
     speed: RUN_SPEED_BASE,
     collectedLetters: [],
     level: 1,
     laneCount: 3,
     gemsCollected: 0,
     distance: 0,
-    hasDoubleJump: false,
+    comboCount: 0,
+    comboMultiplier: 1,
+    feverMeter: 0,
+    isFeverMode: false,
+    hasDoubleJump: true,
     hasImmortality: false,
     isImmortalityActive: false,
     hasMagnet: false,
     isMagnetActive: false,
-    hasBlaster: false,
-    blasterAmmo: 0,
-    hasShieldDrone: false,
-    isShieldDroneActive: false
+    hasBlaster: true,
+    blasterAmmo: 5,
+    hasShieldDrone: true,
+    isShieldDroneActive: true
   }),
 
   restartGame: () => set({ 
     status: GameStatus.PLAYING, 
     score: 0, 
-    lives: 3, 
-    maxLives: 3,
+    lives: 5, 
+    maxLives: 5,
     speed: RUN_SPEED_BASE,
     collectedLetters: [],
     level: 1,
     laneCount: 3,
     gemsCollected: 0,
     distance: 0,
-    hasDoubleJump: false,
+    comboCount: 0,
+    comboMultiplier: 1,
+    feverMeter: 0,
+    isFeverMode: false,
+    hasDoubleJump: true,
     hasImmortality: false,
     isImmortalityActive: false,
     hasMagnet: false,
     isMagnetActive: false,
-    hasBlaster: false,
-    blasterAmmo: 0,
-    hasShieldDrone: false,
-    isShieldDroneActive: false
+    hasBlaster: true,
+    blasterAmmo: 5,
+    hasShieldDrone: true,
+    isShieldDroneActive: true
   }),
 
   takeDamage: () => {
-    const { lives, isImmortalityActive, isShieldDroneActive } = get();
+    const { lives, isImmortalityActive, isShieldDroneActive, feverMeter } = get();
     if (isImmortalityActive) return; // No damage if immortal
 
     // Shield drone absorbs 1 hit!
     if (isShieldDroneActive) {
-      set({ isShieldDroneActive: false });
+      set({ 
+        isShieldDroneActive: false,
+        comboCount: 0,
+        comboMultiplier: 1,
+        feverMeter: Math.max(0, feverMeter - 30)
+      });
       return;
     }
 
     if (lives > 1) {
-      set({ lives: lives - 1 });
+      set({ 
+        lives: lives - 1,
+        comboCount: 0,
+        comboMultiplier: 1,
+        feverMeter: Math.max(0, feverMeter - 50),
+        isFeverMode: false
+      });
     } else {
       const finalScore = get().score;
       const finalDistance = Math.floor(get().distance);
@@ -208,10 +251,44 @@ export const useStore = create<GameState>((set, get) => ({
 
   addScore: (amount) => set((state) => ({ score: state.score + amount })),
   
-  collectGem: (value) => set((state) => ({ 
-    score: state.score + value, 
-    gemsCollected: state.gemsCollected + 1 
-  })),
+  collectGem: (value) => {
+    const state = get();
+    const newCombo = state.comboCount + 1;
+    let baseMult = 1;
+    if (newCombo >= 20) baseMult = 5;
+    else if (newCombo >= 12) baseMult = 3;
+    else if (newCombo >= 5) baseMult = 2;
+
+    const mult = state.isFeverMode ? baseMult * 2 : baseMult;
+    const addedScore = value * mult;
+
+    let newFeverMeter = state.feverMeter + (state.isFeverMode ? 0 : 8);
+    let triggerFever = false;
+    if (newFeverMeter >= 100 && !state.isFeverMode) {
+      newFeverMeter = 100;
+      triggerFever = true;
+    }
+
+    if (triggerFever) {
+      setTimeout(() => {
+        useStore.setState({ isFeverMode: false, feverMeter: 0, isMagnetActive: false });
+      }, 7000);
+      get().updateMissionProgress('FEVER', 1);
+    }
+
+    set({
+      score: state.score + addedScore,
+      gemsCollected: state.gemsCollected + 1,
+      comboCount: newCombo,
+      comboMultiplier: mult,
+      feverMeter: newFeverMeter,
+      isFeverMode: state.isFeverMode || triggerFever,
+      isMagnetActive: state.isMagnetActive || triggerFever
+    });
+
+    get().updateMissionProgress('GEMS', 1);
+    get().updateMissionProgress('COMBO', newCombo);
+  },
 
   setDistance: (dist) => {
     set({ distance: dist });
@@ -220,6 +297,7 @@ export const useStore = create<GameState>((set, get) => ({
       set({ bestDistance: Math.floor(dist) });
       try { localStorage.setItem('gemini_runner_best_distance', Math.floor(dist).toString()); } catch {}
     }
+    get().updateMissionProgress('DISTANCE', Math.floor(dist));
   },
 
   collectLetter: (index) => {
@@ -268,6 +346,7 @@ export const useStore = create<GameState>((set, get) => ({
           speed: newSpeed,
           collectedLetters: []
       });
+      get().updateMissionProgress('LEVEL', nextLevel);
   },
 
   buyItem: (type, cost) => {
@@ -365,6 +444,49 @@ export const useStore = create<GameState>((set, get) => ({
 
   toggleMute: () => set((s) => ({ isMuted: !s.isMuted })),
   toggleMusic: () => set((s) => ({ isMusicPlaying: !s.isMusicPlaying })),
+  setGraphicsQuality: (quality: GraphicsQuality) => {
+    set({ graphicsQuality: quality });
+    try { localStorage.setItem('gemini_runner_graphics', quality); } catch {}
+  },
+
+  updateMissionProgress: (type, amount) => {
+    const { missions } = get();
+    let updated = false;
+    const newMissions = missions.map((m) => {
+      if (m.type === type && !m.isCompleted) {
+        const nextVal = Math.min(m.target, m.current + amount);
+        if (nextVal !== m.current) {
+          updated = true;
+          return {
+            ...m,
+            current: nextVal,
+            isCompleted: nextVal >= m.target
+          };
+        }
+      }
+      return m;
+    });
+
+    if (updated) {
+      set({ missions: newMissions });
+      try { localStorage.setItem('gemini_runner_missions', JSON.stringify(newMissions)); } catch {}
+    }
+  },
+
+  claimMissionReward: (missionId) => {
+    const { missions, score, totalGems } = get();
+    const targetMission = missions.find(m => m.id === missionId);
+    if (targetMission && targetMission.isCompleted && !targetMission.isClaimed) {
+      const reward = targetMission.rewardGems;
+      const updatedMissions = missions.map(m => m.id === missionId ? { ...m, isClaimed: true } : m);
+      set({
+        score: score + reward,
+        totalGems: totalGems + reward,
+        missions: updatedMissions
+      });
+      try { localStorage.setItem('gemini_runner_missions', JSON.stringify(updatedMissions)); } catch {}
+    }
+  },
 
   setStatus: (status) => set({ status }),
 }));
