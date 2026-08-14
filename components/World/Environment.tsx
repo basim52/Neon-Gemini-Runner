@@ -3,11 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../../store';
-import { LANE_WIDTH, getLevelTheme, LevelTheme, GraphicsQuality } from '../../types';
+import { LANE_WIDTH, getLevelTheme, LevelTheme, GraphicsQuality, GameStatus, LEVEL_THEMES } from '../../types';
+import { DynamicWeather } from './DynamicWeather';
+import { BossEncounter } from './BossEncounter';
+import { GhostRunner } from './GhostRunner';
 
 const StarField: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
   const speed = useStore(state => state.speed);
@@ -383,6 +386,46 @@ const SideScenery: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
                 </mesh>
               </group>
             )}
+
+            {theme.sceneryType === 'SOLAR_DESERT' && (
+              <group position={[0, 6, 0]}>
+                {/* Golden Cyber Pyramid */}
+                <mesh castShadow rotation={[0, Math.PI / 4, 0]}>
+                  <coneGeometry args={[3.8, 12, 4]} />
+                  <meshStandardMaterial color="#3d2800" roughness={0.3} metalness={0.8} />
+                </mesh>
+                {/* Glowing Apex Crown */}
+                <mesh position={[0, 6.2, 0]}>
+                  <octahedronGeometry args={[1.2, 0]} />
+                  <meshBasicMaterial color="#00ffaa" />
+                </mesh>
+                {/* Orbiting Solar Ring */}
+                <mesh position={[0, 3, 0]} rotation={[Math.PI / 3, 0, 0]}>
+                  <torusGeometry args={[4.5, 0.15, 16, 32]} />
+                  <meshBasicMaterial color="#ffd700" />
+                </mesh>
+              </group>
+            )}
+
+            {theme.sceneryType === 'CYBER_ABYSS' && (
+              <group position={[0, 7, 0]}>
+                {/* Plasma Abyss Monolith */}
+                <mesh castShadow>
+                  <boxGeometry args={[2.8, 15, 2.8]} />
+                  <meshStandardMaterial color="#120024" roughness={0.2} metalness={0.9} />
+                </mesh>
+                {/* Floating Spinning Plasma Ring */}
+                <mesh position={[0, 4, 0]} rotation={[0.6, 0.8, 0]}>
+                  <torusGeometry args={[4.2, 0.25, 16, 32]} />
+                  <meshBasicMaterial color="#ff00ea" />
+                </mesh>
+                {/* Glowing Electric Core */}
+                <mesh position={[0, 8, 0]}>
+                  <sphereGeometry args={[1.5, 16, 16]} />
+                  <meshBasicMaterial color="#39ff14" />
+                </mesh>
+              </group>
+            )}
           </group>
         );
       })}
@@ -392,8 +435,25 @@ const SideScenery: React.FC<{ theme: LevelTheme }> = ({ theme }) => {
 
 export const Environment: React.FC = () => {
   const level = useStore(state => state.level);
+  const distance = useStore(state => state.distance);
+  const status = useStore(state => state.status);
   const graphicsQuality = useStore(state => state.graphicsQuality);
-  const theme = getLevelTheme(level);
+
+  // Dynamically cycle through biomes every 350m based on distance traveled!
+  const isPlaying = status === GameStatus.PLAYING;
+  const distanceShift = isPlaying ? Math.floor(distance / 350) : 0;
+  const effectiveLevel = ((level - 1 + distanceShift) % LEVEL_THEMES.length) + 1;
+  const theme = getLevelTheme(effectiveLevel);
+
+  const lastBiomeRef = useRef(effectiveLevel);
+  useEffect(() => {
+    if (isPlaying && lastBiomeRef.current !== effectiveLevel) {
+      lastBiomeRef.current = effectiveLevel;
+      window.dispatchEvent(new CustomEvent('biome-changed', {
+        detail: { theme }
+      }));
+    }
+  }, [effectiveLevel, isPlaying, theme]);
 
   const isHigh = graphicsQuality === GraphicsQuality.HIGH;
   const isLow = graphicsQuality === GraphicsQuality.LOW;
@@ -431,6 +491,9 @@ export const Environment: React.FC = () => {
       <LaneGuides theme={theme} />
       <SideScenery theme={theme} />
       <RetroSun theme={theme} />
+      <DynamicWeather theme={theme} />
+      <GhostRunner />
+      <BossEncounter />
     </>
   );
 };

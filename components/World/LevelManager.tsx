@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { Text3D, Center } from '@react-three/drei';
 import { v4 as uuidv4 } from 'uuid';
 import { useStore } from '../../store';
-import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, getLevelTheme, getLevelTargetWord, getLetterColor, GraphicsQuality } from '../../types';
+import { GameObject, ObjectType, LANE_WIDTH, SPAWN_DISTANCE, REMOVE_DISTANCE, GameStatus, GEMINI_COLORS, getLevelTheme, getLevelTargetWord, getLetterColor, GraphicsQuality, BossType } from '../../types';
 import { audio } from '../System/Audio';
 
 // Geometry Constants
@@ -26,6 +26,9 @@ const ICE_SPIRE_GEO = new THREE.ConeGeometry(0.8, 2.0, 5);
 const QUANTUM_NODE_GEO = new THREE.OctahedronGeometry(0.95, 0);
 const TITAN_PILLAR_GEO = new THREE.CylinderGeometry(0.7, 0.9, 2.2, 6);
 const DIAMOND_PRISM_GEO = new THREE.OctahedronGeometry(1.1, 0);
+const SOLAR_PYRAMID_GEO = new THREE.ConeGeometry(0.9, 1.8, 4);
+const CYBER_ABYSS_CRYSTAL_GEO = new THREE.OctahedronGeometry(1.0, 0);
+const ABYSS_RING_GEO = new THREE.TorusGeometry(1.3, 0.08, 16, 32);
 
 const GEM_GEOMETRY = new THREE.IcosahedronGeometry(0.3, 0);
 
@@ -226,13 +229,19 @@ export const LevelManager: React.FC = () => {
     setDistance,
     openShop,
     level,
-    isMagnetActive
+    isMagnetActive,
+    bossState,
+    triggerBossEncounter,
+    damageBoss,
+    defeatBoss,
+    isUltimateActive
   } = useStore();
   
   const objectsRef = useRef<GameObject[]>([]);
   const [, setRenderTrigger] = useState(0);
   const prevStatus = useRef(status);
   const prevLevel = useRef(level);
+  const lastBossAttackTime = useRef(0);
 
   const playerObjRef = useRef<THREE.Object3D | null>(null);
   const distanceTraveled = useRef(0);
@@ -277,6 +286,19 @@ export const LevelManager: React.FC = () => {
             active: true,
         });
         nextLetterDistance.current = distanceTraveled.current - SPAWN_DISTANCE + getLetterInterval(level);
+        
+        // Trigger Boss Battle based on level!
+        if (level === 2) {
+          triggerBossEncounter(BossType.CYBER_TITAN_CORE);
+        } else if (level === 4) {
+          triggerBossEncounter(BossType.PLASMA_DRAGON);
+        } else if (level === 6) {
+          triggerBossEncounter(BossType.QUANTUM_OVERLORD);
+        } else if (level % 2 === 0) {
+          const bosses = [BossType.CYBER_TITAN_CORE, BossType.PLASMA_DRAGON, BossType.QUANTUM_OVERLORD];
+          triggerBossEncounter(bosses[Math.floor(Math.random() * bosses.length)]);
+        }
+
         setRenderTrigger(t => t + 1);
     } else if (status === GameStatus.GAME_OVER || status === GameStatus.VICTORY) {
         setDistance(Math.floor(distanceTraveled.current));
@@ -284,7 +306,7 @@ export const LevelManager: React.FC = () => {
     
     prevStatus.current = status;
     prevLevel.current = level;
-  }, [status, level, setDistance]);
+  }, [status, level, setDistance, triggerBossEncounter]);
 
   useFrame((state) => {
       if (!playerObjRef.current) {
@@ -376,8 +398,21 @@ export const LevelManager: React.FC = () => {
              }
         }
 
-        // Laser Shot Collision against Obstacles / Aliens / Missiles / Sliding Barriers
+        // Laser Shot Collision against Obstacles / Aliens / Missiles / Sliding Barriers / BOSS
         if (obj.type === ObjectType.LASER_SHOT && obj.active) {
+          // Check Boss Hit
+          if (bossState && bossState.active && obj.position[2] < -35) {
+            damageBoss(40);
+            obj.active = false;
+            hasChanges = true;
+            audio.playExplosion();
+            window.dispatchEvent(new Event('boss-hit'));
+            window.dispatchEvent(new CustomEvent('particle-burst', { 
+              detail: { position: [obj.position[0], 5, -40], color: bossState.color || '#ff0055', type: 'explosion', count: 80 } 
+            }));
+            useStore.getState().addScore(500);
+          }
+
           for (const target of currentObjects) {
             if (target.active && (
               target.type === ObjectType.OBSTACLE || 
@@ -505,6 +540,33 @@ export const LevelManager: React.FC = () => {
 
     if (newSpawns.length > 0) {
         keptObjects.push(...newSpawns);
+    }
+
+    // Boss Attack Barrage Spawning
+    if (bossState && bossState.active && Date.now() - lastBossAttackTime.current > 3500) {
+      lastBossAttackTime.current = Date.now();
+      const maxL = Math.floor(laneCount / 2);
+      const randomLane1 = getRandomLane(laneCount);
+      const randomLane2 = (randomLane1 + 1) > maxL ? randomLane1 - 1 : randomLane1 + 1;
+      
+      keptObjects.push(
+        {
+          id: uuidv4(),
+          type: ObjectType.MISSILE,
+          position: [randomLane1 * LANE_WIDTH, 1.0, -38],
+          active: true,
+          color: bossState.accentColor || '#ff0055'
+        },
+        {
+          id: uuidv4(),
+          type: ObjectType.MISSILE,
+          position: [randomLane2 * LANE_WIDTH, 1.0, -38],
+          active: true,
+          color: bossState.accentColor || '#ff0055'
+        }
+      );
+      hasChanges = true;
+      audio.playLaserShot();
     }
 
     // Spawning Logic
@@ -864,7 +926,7 @@ const GameEntity: React.FC<{ data: GameObject }> = React.memo(({ data }) => {
                             </mesh>
                           </>
                         )}
-                        {(level >= 8) && (
+                        {level === 8 && (
                           <>
                             {/* Diamond Prism */}
                             <mesh geometry={DIAMOND_PRISM_GEO} castShadow receiveShadow>
@@ -872,6 +934,28 @@ const GameEntity: React.FC<{ data: GameObject }> = React.memo(({ data }) => {
                             </mesh>
                             <mesh scale={[1.12, 1.12, 1.12]} geometry={DIAMOND_PRISM_GEO}>
                                  <meshBasicMaterial color="#ff00aa" wireframe transparent opacity={0.5} />
+                            </mesh>
+                          </>
+                        )}
+                        {level === 9 && (
+                          <>
+                            {/* Solar Punk Golden Pyramid Spike */}
+                            <mesh geometry={SOLAR_PYRAMID_GEO} rotation={[0, Math.PI / 4, 0]} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#3d2800" roughness={0.2} metalness={0.9} emissive="#ffd700" emissiveIntensity={0.8} />
+                            </mesh>
+                            <mesh scale={[1.08, 1.08, 1.08]} rotation={[0, Math.PI / 4, 0]} geometry={SOLAR_PYRAMID_GEO}>
+                                 <meshBasicMaterial color="#00ffaa" wireframe transparent opacity={0.6} />
+                            </mesh>
+                          </>
+                        )}
+                        {(level >= 10) && (
+                          <>
+                            {/* Cyber Plasma Abyss Crystal & Ring */}
+                            <mesh geometry={CYBER_ABYSS_CRYSTAL_GEO} castShadow receiveShadow>
+                                 <meshStandardMaterial color="#1f0033" roughness={0.1} metalness={0.95} emissive="#ff00ea" emissiveIntensity={0.9} />
+                            </mesh>
+                            <mesh geometry={ABYSS_RING_GEO} rotation={[Math.PI / 3, 0, 0]}>
+                                 <meshBasicMaterial color="#39ff14" />
                             </mesh>
                           </>
                         )}

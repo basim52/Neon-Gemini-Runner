@@ -400,6 +400,26 @@ export class AudioController {
     noise.start(t);
     noise.stop(t + 0.3);
   }
+
+  playVictoryFanfare() {
+    if (!this.ctx || !this.masterGain) this.init();
+    if (!this.ctx || !this.masterGain) return;
+
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+    const t = this.ctx.currentTime;
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, t + idx * 0.1);
+      gain.gain.setValueAtTime(0.35, t + idx * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.1 + 0.35);
+      osc.connect(gain);
+      gain.connect(this.masterGain!);
+      osc.start(t + idx * 0.1);
+      osc.stop(t + idx * 0.1 + 0.36);
+    });
+  }
 }
 
 export const audio = new AudioController();

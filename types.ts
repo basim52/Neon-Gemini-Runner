@@ -30,7 +30,10 @@ export enum ObjectType {
   POWERUP_BLASTER = 'POWERUP_BLASTER',
   SLIDING_BARRIER = 'SLIDING_BARRIER',
   BOOST_PAD = 'BOOST_PAD',
-  LASER_SHOT = 'LASER_SHOT'
+  LASER_SHOT = 'LASER_SHOT',
+  WARP_PORTAL = 'WARP_PORTAL',
+  BOSS_MISSILE = 'BOSS_MISSILE',
+  BOSS_ENERGY_ORB = 'BOSS_ENERGY_ORB'
 }
 
 export enum PlayerSkin {
@@ -38,6 +41,16 @@ export enum PlayerSkin {
   ROBLOX_GOLD = 'ROBLOX_GOLD',
   ROBLOX_NEON = 'ROBLOX_NEON',
   ROBLOX_NINJA = 'ROBLOX_NINJA'
+}
+
+export interface HeroUltimate {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  descAr: string;
+  duration: number; // in seconds
+  color: string;
+  iconName: string;
 }
 
 export interface SkinInfo {
@@ -50,6 +63,7 @@ export interface SkinInfo {
   pantColor: string;
   cost: number;
   description: string;
+  ultimate: HeroUltimate;
 }
 
 export const SKINS_DATA: Record<PlayerSkin, SkinInfo> = {
@@ -62,7 +76,16 @@ export const SKINS_DATA: Record<PlayerSkin, SkinInfo> = {
     skinTone: '#f3c299',
     pantColor: '#1a1a1b',
     cost: 0,
-    description: 'The iconic Roblox boy with black hoodie, spiky hair & sneakers!'
+    description: 'The iconic Roblox boy with black hoodie, spiky hair & sneakers!',
+    ultimate: {
+      id: 'EMP_SHOCKWAVE',
+      nameAr: 'موجة الصدمة الكهرومغناطيسية',
+      nameEn: 'EMP SHOCKWAVE JUMP',
+      descAr: 'قفزة نفاثة عملاقة تمحو جميع العوائق في الأفق وتمنح درع حماية!',
+      duration: 5,
+      color: '#00ffff',
+      iconName: 'Zap'
+    }
   },
   [PlayerSkin.ROBLOX_GOLD]: { 
     id: PlayerSkin.ROBLOX_GOLD, 
@@ -73,7 +96,16 @@ export const SKINS_DATA: Record<PlayerSkin, SkinInfo> = {
     skinTone: '#fbe2b5',
     pantColor: '#332a00',
     cost: 1500,
-    description: 'Pure 24K gold hoodie with glowing accessories.'
+    description: 'Pure 24K gold hoodie with glowing accessories.',
+    ultimate: {
+      id: 'MIDAS_GOLD_STORM',
+      nameAr: 'عاصفة الذهب الخالص',
+      nameEn: 'MIDAS GOLD RUSH',
+      descAr: 'مضاعفة نقاط الجواهر 3x وسحب مغناطيسي فائق لجميع الجواهر!',
+      duration: 7,
+      color: '#ffd700',
+      iconName: 'Sparkles'
+    }
   },
   [PlayerSkin.ROBLOX_NEON]: { 
     id: PlayerSkin.ROBLOX_NEON, 
@@ -84,7 +116,16 @@ export const SKINS_DATA: Record<PlayerSkin, SkinInfo> = {
     skinTone: '#e6f7ff',
     pantColor: '#0a192f',
     cost: 2500,
-    description: 'Futuristic glowing cyber-suit Roblox runner.'
+    description: 'Futuristic glowing cyber-suit Roblox runner.',
+    ultimate: {
+      id: 'PLASMA_OVERLOAD',
+      nameAr: 'شعاع البلازما الفائق',
+      nameEn: 'HYPER PLASMA BEAM',
+      descAr: 'إطلاق وابل ليزري مستمر يدمّر العوائق والزعماء تلقائياً!',
+      duration: 6,
+      color: '#ff00aa',
+      iconName: 'Crosshair'
+    }
   },
   [PlayerSkin.ROBLOX_NINJA]: { 
     id: PlayerSkin.ROBLOX_NINJA, 
@@ -95,8 +136,239 @@ export const SKINS_DATA: Record<PlayerSkin, SkinInfo> = {
     skinTone: '#d1d5db',
     pantColor: '#1f1135',
     cost: 4000,
-    description: 'Stealthy purple shadow ninja Roblox skin.'
+    description: 'Stealthy purple shadow ninja Roblox skin.',
+    ultimate: {
+      id: 'SHADOW_PHASE',
+      nameAr: 'الانتقال الشبحي اللامرئي',
+      nameEn: 'SHADOW PHASE SHIFT',
+      descAr: 'اختفاء شبحي كامل واختراق لجميع الأجسام بحصانة تامة!',
+      duration: 6,
+      color: '#a855f7',
+      iconName: 'Ghost'
+    }
   }
+};
+
+// Cyber Boss Types & Data
+export enum BossType {
+  CYBER_TITAN_CORE = 'CYBER_TITAN_CORE',
+  PLASMA_DRAGON = 'PLASMA_DRAGON',
+  QUANTUM_OVERLORD = 'QUANTUM_OVERLORD'
+}
+
+export interface BossData {
+  type: BossType;
+  nameAr: string;
+  nameEn: string;
+  maxHealth: number;
+  color: string;
+  accentColor: string;
+  rewardScore: number;
+  rewardGems: number;
+}
+
+export const BOSS_ROSTER: Record<BossType, BossData> = {
+  [BossType.CYBER_TITAN_CORE]: {
+    type: BossType.CYBER_TITAN_CORE,
+    nameAr: 'نواة التيتان السيبراني',
+    nameEn: 'CYBER TITAN CORE',
+    maxHealth: 100,
+    color: '#00ffff',
+    accentColor: '#ff00aa',
+    rewardScore: 5000,
+    rewardGems: 300
+  },
+  [BossType.PLASMA_DRAGON]: {
+    type: BossType.PLASMA_DRAGON,
+    nameAr: 'تنين البلازما الفضائي',
+    nameEn: 'PLASMA DRAGON MK-X',
+    maxHealth: 140,
+    color: '#ff3300',
+    accentColor: '#ffd700',
+    rewardScore: 7500,
+    rewardGems: 450
+  },
+  [BossType.QUANTUM_OVERLORD]: {
+    type: BossType.QUANTUM_OVERLORD,
+    nameAr: 'سيد البعد الكمومي',
+    nameEn: 'QUANTUM OVERLORD',
+    maxHealth: 180,
+    color: '#e000ff',
+    accentColor: '#39ff14',
+    rewardScore: 10000,
+    rewardGems: 600
+  }
+};
+
+// Permanent Tech Lab Upgrades
+export interface TechUpgrade {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  descAr: string;
+  maxLevel: number;
+  baseCost: number;
+  costMultiplier: number;
+  iconName: string;
+  icon?: string;
+  bonusPerLevel?: number;
+  color: string;
+}
+
+export const TECH_UPGRADES: TechUpgrade[] = [
+  {
+    id: 'MAGNET_BOOST',
+    nameAr: 'تطوير المغناطيس',
+    nameEn: 'MAGNET DURATION & RANGE',
+    descAr: 'زيادة مدة وقوة سحب المغناطيس للجواهر والحروف.',
+    maxLevel: 5,
+    baseCost: 200,
+    costMultiplier: 1.8,
+    iconName: 'Magnet',
+    icon: '🧲',
+    bonusPerLevel: 25,
+    color: '#00ffff'
+  },
+  {
+    id: 'SHIELD_REGEN',
+    nameAr: 'إعادة شحن الدرع',
+    nameEn: 'DRONE AUTO RECHARGE',
+    descAr: 'درع الحماية يعيد شحن نفسه تلقائياً كل 40 ثانية أثناء الجري.',
+    maxLevel: 5,
+    baseCost: 350,
+    costMultiplier: 2.0,
+    iconName: 'Shield',
+    icon: '🛡️',
+    bonusPerLevel: 20,
+    color: '#00ffcc'
+  },
+  {
+    id: 'BLASTER_SURGE',
+    nameAr: 'سعة مدفع الليزر',
+    nameEn: 'LASER BLASTER CAPACITY',
+    descAr: 'زيادة الذخيرة القصوى وتوليد طلقة إضافية كل 15 ثانية.',
+    maxLevel: 5,
+    baseCost: 250,
+    costMultiplier: 1.7,
+    iconName: 'Crosshair',
+    icon: '🎯',
+    bonusPerLevel: 30,
+    color: '#ffaa00'
+  },
+  {
+    id: 'ULTIMATE_MASTERY',
+    nameAr: 'شحن القدرة الخارقة',
+    nameEn: 'ULTIMATE CHARGE RATE',
+    descAr: 'تسريع شحن مقياس القدرة الخارقة بنسبة 20% لكل ترقية.',
+    maxLevel: 5,
+    baseCost: 400,
+    costMultiplier: 2.2,
+    iconName: 'Zap',
+    icon: '⚡',
+    bonusPerLevel: 20,
+    color: '#ff00aa'
+  },
+  {
+    id: 'GEM_HARVESTER',
+    nameAr: 'مضاعفة حصاد الجواهر',
+    nameEn: 'GEM VALUE HARVESTER',
+    descAr: 'زيادة قيمة ونقاط كل جوهرة يتم جمعها في المسار.',
+    maxLevel: 5,
+    baseCost: 300,
+    costMultiplier: 1.9,
+    iconName: 'Coins',
+    icon: '💎',
+    bonusPerLevel: 35,
+    color: '#ffd700'
+  }
+];
+
+// Cyber Badges & Titles
+export interface CyberBadge {
+  id: string;
+  titleAr: string;
+  descAr: string;
+  rewardTitle: string;
+  iconName: string;
+  icon?: string;
+  color: string;
+}
+
+export const CYBER_BADGES: CyberBadge[] = [
+  {
+    id: 'BADGE_BOSS_SLAYER',
+    titleAr: 'قاهر الزعماء',
+    descAr: 'اهزم أول زعيم سيبراني في اللعبة',
+    rewardTitle: '👑 قاهر الزعماء',
+    iconName: 'Crown',
+    icon: '👑',
+    color: '#ffd700'
+  },
+  {
+    id: 'BADGE_SPEED_DEMON',
+    titleAr: 'شبح السرعة',
+    descAr: 'اقطع مسافة 1500 متر في جولة واحدة',
+    rewardTitle: '⚡ شبح السرعة',
+    iconName: 'Flame',
+    icon: '⚡',
+    color: '#ff3300'
+  },
+  {
+    id: 'BADGE_COMBO_MASTER',
+    titleAr: 'سيد الكومبو الأسطوري',
+    descAr: 'حقق كومبو 25x متتالي',
+    rewardTitle: '🎯 سيد الكومبو',
+    iconName: 'Target',
+    icon: '🎯',
+    color: '#00ffff'
+  },
+  {
+    id: 'BADGE_TECH_GENIUS',
+    titleAr: 'خبير المختبر',
+    descAr: 'قم بترقية 5 مهارات في شجرة التطوير',
+    rewardTitle: '🔬 خبير التكنولوجيا',
+    iconName: 'Cpu',
+    icon: '🔬',
+    color: '#00ffaa'
+  },
+  {
+    id: 'BADGE_WARP_EXPLORER',
+    titleAr: 'مستكشف الأبعاد',
+    descAr: 'ادخل بوابة البُعد الفائق Warp Portal',
+    rewardTitle: '🌌 مسافر الأبعاد',
+    iconName: 'Compass',
+    icon: '🌌',
+    color: '#e000ff'
+  }
+];
+
+// Daily Challenge
+export interface DailyChallenge {
+  date: string;
+  word: string;
+  hintAr: string;
+  titleAr?: string;
+  descAr?: string;
+  target?: number;
+  current?: number;
+  rewardGems: number;
+  rewardAmmo: number;
+  isCompleted: boolean;
+  isClaimed?: boolean;
+}
+
+export const CURRENT_DAILY_CHALLENGE: DailyChallenge = {
+  date: new Date().toISOString().split('T')[0],
+  word: 'CYBER',
+  hintAr: 'لغز اليوم: عالم التقنية النيونية والذكاء الاصطناعي (5 حروف)',
+  titleAr: 'تحدي تجميع الكلمات السيبرانية',
+  descAr: 'اجمع أحرف كلمة اليوم الكاملة وافتح مكافآت الجواهر والذخيرة!',
+  target: 5,
+  current: 0,
+  rewardGems: 500,
+  rewardAmmo: 10,
+  isCompleted: false,
+  isClaimed: false
 };
 
 export interface GameObject {
@@ -155,7 +427,7 @@ export interface LevelTheme {
   gridColor: string;
   floorColor: string;
   laneColor: string;
-  sceneryType: 'CYBER_CITY' | 'VOLCANIC_INFERNO' | 'MATRIX_JUNGLE' | 'COSMIC_VOID' | 'FROST_REALM' | 'QUANTUM_VOID' | 'TITAN_REALM' | 'ULTIMATE_PEAK';
+  sceneryType: 'CYBER_CITY' | 'VOLCANIC_INFERNO' | 'MATRIX_JUNGLE' | 'COSMIC_VOID' | 'FROST_REALM' | 'QUANTUM_VOID' | 'TITAN_REALM' | 'ULTIMATE_PEAK' | 'SOLAR_DESERT' | 'CYBER_ABYSS';
   obstacleColor: string;
   obstacleGlow: string;
   alienColor: string;
@@ -331,6 +603,48 @@ export const LEVEL_THEMES: LevelTheme[] = [
     alienColor: "#ffffff",
     missileColor: "#ff00aa",
     targetWord: ['V', 'I', 'C', 'T', 'O', 'R', 'Y']
+  },
+  {
+    level: 9,
+    nameAr: "المرحلة 9: واحـة الـشـمـس والـذهـب الـسـيـبـرانـي",
+    nameEn: "STAGE 9: SOLAR PUNK GOLDEN DUNES",
+    bgColor: "#120c00",
+    fogColor: "#181000",
+    ambientColor: "#553300",
+    directionalColor: "#ffd700",
+    pointLightColor: "#00ff99",
+    sunTopColor: "#ffffff",
+    sunBottomColor: "#ff6600",
+    gridColor: "#ffaa00",
+    floorColor: "#221400",
+    laneColor: "#00ffaa",
+    sceneryType: "SOLAR_DESERT",
+    obstacleColor: "#ffd700",
+    obstacleGlow: "#00ffaa",
+    alienColor: "#ffff00",
+    missileColor: "#ff6600",
+    targetWord: ['S', 'O', 'L', 'A', 'R']
+  },
+  {
+    level: 10,
+    nameAr: "المرحلة 10: هـاويـة الـبـلازمـا الـمـتـوهـجـة",
+    nameEn: "STAGE 10: CYBER PLASMA NEON ABYSS",
+    bgColor: "#0a0014",
+    fogColor: "#0d001a",
+    ambientColor: "#3d0066",
+    directionalColor: "#ff00ea",
+    pointLightColor: "#39ff14",
+    sunTopColor: "#ff00cc",
+    sunBottomColor: "#00ffff",
+    gridColor: "#ff00ea",
+    floorColor: "#18002e",
+    laneColor: "#39ff14",
+    sceneryType: "CYBER_ABYSS",
+    obstacleColor: "#ff00ea",
+    obstacleGlow: "#39ff14",
+    alienColor: "#ff00aa",
+    missileColor: "#39ff14",
+    targetWord: ['A', 'B', 'Y', 'S', 'S']
   }
 ];
 

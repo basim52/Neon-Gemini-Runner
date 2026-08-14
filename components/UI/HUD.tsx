@@ -8,10 +8,14 @@ import {
   Heart, Zap, Trophy, MapPin, Diamond, Rocket, ArrowUpCircle, 
   Shield, Activity, PlusCircle, Play, Magnet, Crosshair, 
   Volume2, VolumeX, Music, Sparkles, ChevronLeft, ChevronRight, ArrowUp, Home, RotateCcw,
-  Gauge, Sliders, Cpu, Globe, Pause
+  Gauge, Sliders, Cpu, Globe, Pause, Lock, CheckCircle
 } from 'lucide-react';
 import { useStore } from '../../store';
-import { GameStatus, GEMINI_COLORS, ShopItem, RUN_SPEED_BASE, PlayerSkin, SKINS_DATA, getLevelTheme, getLevelTargetWord, getLetterColor, GraphicsQuality } from '../../types';
+import { 
+  GameStatus, GEMINI_COLORS, ShopItem, RUN_SPEED_BASE, PlayerSkin, 
+  SKINS_DATA, getLevelTheme, getLevelTargetWord, getLetterColor, 
+  GraphicsQuality, TECH_UPGRADES, CYBER_BADGES, BossType 
+} from '../../types';
 import { audio } from '../System/Audio';
 
 // Shop Items List
@@ -73,14 +77,14 @@ const ShopScreen: React.FC = () => {
     const { 
       score, buyItem, closeShop, hasDoubleJump, hasImmortality, 
       unlockedSkins, activeSkin, selectSkin, buySkin, totalGems, activeShopTab,
-      missions, claimMissionReward
+      missions, claimMissionReward, techUpgrades, buyTechUpgrade, unlockedBadges, bossDefeatedCount
     } = useStore();
     
-    const [tab, setTab] = useState<'UPGRADES' | 'SKINS' | 'ACHIEVEMENTS'>(activeShopTab || 'UPGRADES');
+    const [tab, setTab] = useState<'UPGRADES' | 'SKINS' | 'TECH_LAB' | 'ACHIEVEMENTS'>(activeShopTab === 'TECH_LAB' ? 'TECH_LAB' : (activeShopTab as any) || 'UPGRADES');
 
     useEffect(() => {
         if (activeShopTab) {
-            setTab(activeShopTab);
+            setTab(activeShopTab as any);
         }
     }, [activeShopTab]);
 
@@ -136,10 +140,10 @@ const ShopScreen: React.FC = () => {
                         <Home className="w-4 h-4" />
                         <span>العودة للقائمة الرئيسية</span>
                      </button>
-                     <div className="text-xs font-mono text-gray-400">CYBER SHOP</div>
+                     <div className="text-xs font-mono text-cyan-400 font-bold">CYBER LAB & SHOP</div>
                  </div>
 
-                 <h2 className="text-3xl md:text-5xl font-black text-cyan-400 mb-2 font-cyber tracking-widest text-center drop-shadow-[0_0_15px_#00ffff]">متجر الشخصيات والتطويرات</h2>
+                 <h2 className="text-3xl md:text-5xl font-black text-cyan-400 mb-2 font-cyber tracking-widest text-center drop-shadow-[0_0_15px_#00ffff]">مختبر التطويرات والشخصيات</h2>
                  
                  <div className="flex items-center text-yellow-400 mb-6 gap-2">
                      <span className="text-sm md:text-base tracking-wider font-bold">الجواهر المتوفرة:</span>
@@ -147,24 +151,30 @@ const ShopScreen: React.FC = () => {
                  </div>
 
                  {/* Shop Tabs */}
-                 <div className="flex space-x-2 sm:space-x-3 mb-6 bg-gray-900/80 p-1.5 rounded-xl border border-gray-700 dir-rtl">
+                 <div className="flex flex-wrap justify-center gap-2 mb-6 bg-gray-900/80 p-1.5 rounded-xl border border-gray-700 dir-rtl">
                      <button 
                         onClick={() => setTab('UPGRADES')}
-                        className={`px-4 py-2 rounded-lg font-bold text-xs md:text-base transition-all ${tab === 'UPGRADES' ? 'bg-cyan-500 text-black shadow-[0_0_10px_#00ffff]' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3.5 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${tab === 'UPGRADES' ? 'bg-cyan-500 text-black shadow-[0_0_10px_#00ffff]' : 'text-gray-400 hover:text-white'}`}
                      >
                         المقويات
                      </button>
                      <button 
                         onClick={() => setTab('SKINS')}
-                        className={`px-4 py-2 rounded-lg font-bold text-xs md:text-base transition-all ${tab === 'SKINS' ? 'bg-pink-500 text-black shadow-[0_0_10px_#ff0077]' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-3.5 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${tab === 'SKINS' ? 'bg-pink-500 text-black shadow-[0_0_10px_#ff0077]' : 'text-gray-400 hover:text-white'}`}
                      >
                         الشخصيات
                      </button>
                      <button 
-                        onClick={() => setTab('ACHIEVEMENTS')}
-                        className={`relative px-4 py-2 rounded-lg font-bold text-xs md:text-base transition-all ${tab === 'ACHIEVEMENTS' ? 'bg-amber-400 text-black shadow-[0_0_10px_#ffcc00]' : 'text-gray-400 hover:text-white'}`}
+                        onClick={() => setTab('TECH_LAB')}
+                        className={`px-3.5 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${tab === 'TECH_LAB' ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-black shadow-[0_0_15px_#00ffff]' : 'text-cyan-300 hover:text-white'}`}
                      >
-                        <span>المهمات والإنجازات 🏆</span>
+                        ⚡ شجرة التكنولوجيا الدائمة
+                     </button>
+                     <button 
+                        onClick={() => setTab('ACHIEVEMENTS')}
+                        className={`relative px-3.5 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${tab === 'ACHIEVEMENTS' ? 'bg-amber-400 text-black shadow-[0_0_10px_#ffcc00]' : 'text-gray-400 hover:text-white'}`}
+                     >
+                        <span>المهمات والأوسمة 🏆</span>
                         {hasClaimableMissions && (
                             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
                         )}
@@ -193,6 +203,66 @@ const ShopScreen: React.FC = () => {
                                </div>
                            );
                        })}
+                   </div>
+                 ) : tab === 'TECH_LAB' ? (
+                   <div className="max-w-5xl w-full mb-8 dir-rtl space-y-4">
+                       <div className="bg-cyan-950/40 border border-cyan-500/40 p-4 rounded-2xl text-center">
+                           <h3 className="text-xl font-black text-cyan-300 mb-1">⚡ شجرة التكنولوجيا السيبرانية (Permanent Tech Tree)</h3>
+                           <p className="text-xs text-gray-300">تطويرات دائمة لا تفقدها حتى عند الموت أو إعادة التشغيل، لزيادة قوة ومناعة شخصيتك في كل جولة!</p>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                           {TECH_UPGRADES.map(tech => {
+                               const currentLv = techUpgrades[tech.id] || 0;
+                               const isMax = currentLv >= tech.maxLevel;
+                               const cost = Math.floor(tech.baseCost * Math.pow(tech.costMultiplier, currentLv));
+                               const canAfford = score >= cost && !isMax;
+
+                               return (
+                                   <div key={tech.id} className="bg-gray-900/90 border border-gray-700 hover:border-cyan-400 p-4 rounded-2xl flex flex-col justify-between shadow-xl transition-all">
+                                       <div>
+                                           <div className="flex items-center justify-between mb-2">
+                                               <div className="flex items-center gap-2">
+                                                   <span className="text-2xl">{tech.icon}</span>
+                                                   <div>
+                                                       <h4 className="text-sm font-bold text-cyan-300">{tech.nameAr}</h4>
+                                                       <span className="text-[10px] text-gray-400 font-mono">{tech.nameEn}</span>
+                                                   </div>
+                                               </div>
+                                               <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-500/50 text-cyan-300">
+                                                   Lv {currentLv} / {tech.maxLevel}
+                                               </span>
+                                           </div>
+                                           <p className="text-xs text-gray-300 mb-3">{tech.descAr}</p>
+                                           
+                                           {/* Level Bars */}
+                                           <div className="flex gap-1 mb-4">
+                                               {[...Array(tech.maxLevel)].map((_, i) => (
+                                                   <div 
+                                                       key={i} 
+                                                       className={`h-2 flex-1 rounded-full transition-all ${i < currentLv ? 'bg-cyan-400 shadow-[0_0_8px_#00ffff]' : 'bg-gray-800'}`}
+                                                   />
+                                               ))}
+                                           </div>
+                                       </div>
+
+                                       <button
+                                           onClick={() => buyTechUpgrade(tech.id)}
+                                           disabled={isMax || !canAfford}
+                                           className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 ${
+                                               isMax 
+                                                   ? 'bg-gray-800 text-cyan-400 border border-cyan-500/40 cursor-default' 
+                                                   : canAfford 
+                                                       ? 'bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white shadow-[0_0_15px_rgba(0,255,255,0.4)] hover:scale-102 cursor-pointer' 
+                                                       : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
+                                           }`}
+                                       >
+                                           {isMax ? 'مكتمل إلى الحد الأقصى MAX ✓' : `ترقية المستوى (+${tech.bonusPerLevel}% تأثير) • ${cost.toLocaleString()} 💎`}
+                                       </button>
+                                   </div>
+                               );
+                           })}
+                       </div>
                    </div>
                  ) : tab === 'SKINS' ? (
                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl w-full mb-8">
@@ -242,6 +312,41 @@ const ShopScreen: React.FC = () => {
                    </div>
                  ) : (
                    <div className="max-w-4xl w-full mb-8 dir-rtl space-y-6">
+                       {/* Badges and Trophies Gallery */}
+                       <div className="bg-gray-950/80 border border-purple-500/40 rounded-2xl p-4 shadow-[0_0_20px_rgba(168,85,247,0.15)] space-y-3">
+                           <div className="flex items-center justify-between border-b border-purple-500/20 pb-2">
+                               <h3 className="text-lg font-black text-purple-300 flex items-center gap-2 font-sans">
+                                   🎖️ أوسمة الأبطال السيبرانية (Cyber Badges)
+                               </h3>
+                               <span className="text-xs text-purple-400 font-mono">الانتصارات على الزعماء: {bossDefeatedCount}</span>
+                           </div>
+
+                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                               {CYBER_BADGES.map(badge => {
+                                   const isUnlocked = unlockedBadges.includes(badge.id);
+                                   return (
+                                       <div 
+                                           key={badge.id}
+                                           className={`p-3 rounded-xl border flex flex-col items-center text-center transition-all ${
+                                               isUnlocked 
+                                                   ? 'bg-purple-950/40 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]' 
+                                                   : 'bg-gray-900/60 border-gray-800 opacity-60'
+                                           }`}
+                                       >
+                                           <span className={`text-3xl mb-1.5 ${isUnlocked ? 'scale-110 drop-shadow-[0_0_10px_gold]' : 'grayscale'}`}>
+                                               {badge.icon}
+                                           </span>
+                                           <h4 className="text-xs font-bold text-purple-200">{badge.titleAr}</h4>
+                                           <p className="text-[10px] text-gray-400 mt-0.5">{badge.descAr}</p>
+                                           <span className={`mt-2 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${isUnlocked ? 'bg-purple-500/20 text-purple-300 border border-purple-400' : 'bg-gray-800 text-gray-500'}`}>
+                                               {isUnlocked ? 'مكتسب ✓' : 'مغلق 🔒'}
+                                           </span>
+                                       </div>
+                                   );
+                               })}
+                           </div>
+                       </div>
+
                        {/* Daily Missions Section */}
                        <div className="bg-gray-950/80 border border-amber-500/40 rounded-2xl p-4 shadow-[0_0_20px_rgba(255,180,0,0.15)] space-y-3">
                            <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
@@ -353,12 +458,35 @@ export const HUD: React.FC = () => {
     gemsCollected, distance, isImmortalityActive, speed, isMagnetActive,
     blasterAmmo, isShieldDroneActive, highScore, bestDistance, totalGems, useBlasterAmmo, activateImmortality,
     openShop, graphicsQuality, setGraphicsQuality,
-    comboCount, comboMultiplier, feverMeter, isFeverMode
+    comboCount, comboMultiplier, feverMeter, isFeverMode,
+    highestUnlockedLevel, selectedStartLevel, selectStartLevel,
+    ultimateMeter, isUltimateActive, activateUltimate, bossState, bestGhostFrames,
+    dailyChallenge, claimDailyChallengeReward
   } = useStore();
 
   const [soundOn, setSoundOn] = useState(true);
   const [bgmOn, setBgmOn] = useState(false);
   const [showWordModal, setShowWordModal] = useState(false);
+  const [biomeToast, setBiomeToast] = useState<{ nameAr: string; nameEn: string; color: string } | null>(null);
+
+  useEffect(() => {
+    const handleBiomeChange = (e: CustomEvent) => {
+      const theme = e.detail?.theme;
+      if (theme) {
+        setBiomeToast({
+          nameAr: theme.nameAr,
+          nameEn: theme.nameEn,
+          color: theme.directionalColor || '#00ffff'
+        });
+        const timer = setTimeout(() => {
+          setBiomeToast(null);
+        }, 3500);
+        return () => clearTimeout(timer);
+      }
+    };
+    window.addEventListener('biome-changed', handleBiomeChange as EventListener);
+    return () => window.removeEventListener('biome-changed', handleBiomeChange as EventListener);
+  }, []);
 
   const target = getLevelTargetWord(level);
   const containerClass = "absolute inset-0 pointer-events-none flex flex-col justify-between p-4 md:p-8 z-50 select-none";
@@ -522,7 +650,7 @@ export const HUD: React.FC = () => {
                       <div className="bg-gradient-to-b from-[#12002b] to-[#080015] border border-pink-500/50 rounded-3xl p-6 max-w-lg w-full text-white shadow-[0_0_50px_rgba(255,0,128,0.4)] dir-rtl">
                           <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
                               <h3 className="text-xl font-black text-pink-400 flex items-center gap-2">
-                                  <span>🔤</span> كلمات المراحل الـ 8
+                                  <span>🔤</span> كلمات المراحل الـ 10
                               </h3>
                               <button 
                                   onClick={() => setShowWordModal(false)}
@@ -537,37 +665,45 @@ export const HUD: React.FC = () => {
                           </p>
 
                           <div className="grid grid-cols-2 gap-2.5 font-mono text-xs mb-6">
-                              <div className="bg-cyan-950/60 border border-cyan-500/40 p-2.5 rounded-xl flex justify-between items-center">
+                              <div className="bg-cyan-950/60 border border-cyan-500/40 p-2 rounded-xl flex justify-between items-center">
                                   <span className="text-gray-400">1. Neon Cyber:</span>
-                                  <span className="text-cyan-300 font-bold tracking-widest">GEMINI</span>
+                                  <span className="text-cyan-300 font-bold tracking-widest">CYBER</span>
                               </div>
-                              <div className="bg-purple-950/60 border border-purple-500/40 p-2.5 rounded-xl flex justify-between items-center">
-                                  <span className="text-gray-400">2. Cyber Grid:</span>
-                                  <span className="text-purple-300 font-bold tracking-widest">CYBER</span>
-                              </div>
-                              <div className="bg-red-950/60 border border-red-500/40 p-2.5 rounded-xl flex justify-between items-center">
-                                  <span className="text-gray-400">3. Inferno Hell:</span>
+                              <div className="bg-red-950/60 border border-red-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">2. Inferno Lava:</span>
                                   <span className="text-red-300 font-bold tracking-widest">INFERNO</span>
                               </div>
-                              <div className="bg-green-950/60 border border-green-500/40 p-2.5 rounded-xl flex justify-between items-center">
-                                  <span className="text-gray-400">4. Matrix Void:</span>
+                              <div className="bg-green-950/60 border border-green-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">3. Matrix Jungle:</span>
                                   <span className="text-green-300 font-bold tracking-widest">MATRIX</span>
                               </div>
-                              <div className="bg-blue-950/60 border border-blue-500/40 p-2.5 rounded-xl flex justify-between items-center">
-                                  <span className="text-gray-400">5. Cosmic Way:</span>
-                                  <span className="text-blue-300 font-bold tracking-widest">GALAXY</span>
+                              <div className="bg-purple-950/60 border border-purple-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">4. Cosmic Void:</span>
+                                  <span className="text-purple-300 font-bold tracking-widest">GALAXY</span>
                               </div>
-                              <div className="bg-teal-950/60 border border-teal-500/40 p-2.5 rounded-xl flex justify-between items-center">
-                                  <span className="text-gray-400">6. Crystal Realm:</span>
-                                  <span className="text-teal-300 font-bold tracking-widest">CRYSTAL</span>
+                              <div className="bg-blue-950/60 border border-blue-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">5. Glacial Frost:</span>
+                                  <span className="text-blue-300 font-bold tracking-widest">CRYSTAL</span>
                               </div>
-                              <div className="bg-fuchsia-950/60 border border-fuchsia-500/40 p-2.5 rounded-xl flex justify-between items-center">
-                                  <span className="text-gray-400">7. Quantum Void:</span>
+                              <div className="bg-fuchsia-950/60 border border-fuchsia-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">6. Quantum Void:</span>
                                   <span className="text-fuchsia-300 font-bold tracking-widest">QUANTUM</span>
                               </div>
-                              <div className="bg-amber-950/60 border border-amber-500/40 p-2.5 rounded-xl flex justify-between items-center">
-                                  <span className="text-gray-400">8. Titan Peak:</span>
+                              <div className="bg-amber-950/60 border border-amber-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">7. Titan Realm:</span>
                                   <span className="text-amber-300 font-bold tracking-widest">TITANS</span>
+                              </div>
+                              <div className="bg-emerald-950/60 border border-emerald-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">8. Victory Peak:</span>
+                                  <span className="text-emerald-300 font-bold tracking-widest">VICTORY</span>
+                              </div>
+                              <div className="bg-yellow-950/60 border border-yellow-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">9. Solar Desert:</span>
+                                  <span className="text-yellow-300 font-bold tracking-widest">SOLAR</span>
+                              </div>
+                              <div className="bg-pink-950/60 border border-pink-500/40 p-2 rounded-xl flex justify-between items-center">
+                                  <span className="text-gray-400">10. Cyber Abyss:</span>
+                                  <span className="text-pink-300 font-bold tracking-widest">ABYSS</span>
                               </div>
                           </div>
 
@@ -671,7 +807,7 @@ export const HUD: React.FC = () => {
                                       audio.init();
                                       audio.startBGM();
                                       setBgmOn(true);
-                                      startGame();
+                                      startGame(selectedStartLevel);
                                   }}
                                   className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-600 to-pink-500 p-1 transition-all duration-300 cursor-pointer hover:scale-110 active:scale-95 shadow-[0_0_35px_rgba(0,255,255,0.5)] hover:shadow-[0_0_50px_rgba(255,0,128,0.7)]"
                               >
@@ -680,7 +816,7 @@ export const HUD: React.FC = () => {
                                   </div>
                               </button>
                               <span className="text-sm sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-pink-300 mt-2 block">
-                                  انطلق في السباق الأسطوري
+                                  انطلق في السباق - المرحلة {selectedStartLevel}
                               </span>
                               <span className="text-xs text-cyan-400 font-bold block">اضغط لبدء اللعب الآن ▶</span>
                           </div>
@@ -765,6 +901,73 @@ export const HUD: React.FC = () => {
                               </span>
                           </div>
 
+                      </div>
+
+                      {/* Stages Selector & Saved Progress Card */}
+                      <div className="bg-black/80 border border-cyan-500/40 rounded-2xl p-3 sm:p-4 space-y-2.5 backdrop-blur-md shadow-[0_0_20px_rgba(0,255,255,0.15)]">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-2 dir-rtl">
+                              <div className="flex items-center space-x-2 space-x-reverse text-cyan-300 font-bold text-xs sm:text-sm">
+                                  <Globe className="w-4 h-4 text-cyan-400" />
+                                  <span>اختر المرحلة (حفظ التقدم تلقائياً 💾)</span>
+                              </div>
+                              <span className="text-[10px] sm:text-xs font-mono font-bold text-cyan-300 bg-cyan-950/90 px-2.5 py-0.5 rounded-full border border-cyan-500/50">
+                                  أعلى مرحلة: {highestUnlockedLevel} من 10
+                              </span>
+                          </div>
+
+                          <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2 justify-items-center dir-rtl py-1">
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((lvlNum) => {
+                                  const isUnlocked = lvlNum <= highestUnlockedLevel;
+                                  const isSelected = lvlNum === selectedStartLevel;
+                                  const theme = getLevelTheme(lvlNum);
+
+                                  return (
+                                      <div key={lvlNum} className="flex flex-col items-center gap-1 group">
+                                          <button
+                                              disabled={!isUnlocked}
+                                              onClick={() => {
+                                                  if (isUnlocked) {
+                                                      selectStartLevel(lvlNum);
+                                                  }
+                                              }}
+                                              className={`relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 flex flex-col items-center justify-center transition-all duration-300 ${
+                                                  isSelected 
+                                                      ? 'bg-gradient-to-tr from-cyan-500 via-blue-600 to-purple-600 border-cyan-300 text-white shadow-[0_0_22px_rgba(0,255,255,0.8)] scale-110 z-10 animate-pulse ring-2 ring-cyan-400/50' 
+                                                      : isUnlocked 
+                                                          ? 'bg-gradient-to-b from-gray-900 via-cyan-950/80 to-black border-cyan-500/60 text-cyan-200 hover:border-cyan-300 hover:scale-105 shadow-[0_0_12px_rgba(0,255,255,0.25)] cursor-pointer' 
+                                                          : 'bg-black/80 border-gray-800 text-gray-600 opacity-50 cursor-not-allowed'
+                                              }`}
+                                          >
+                                              {/* Level Number */}
+                                              <span className={`font-black font-cyber text-base sm:text-xl ${isSelected ? 'text-white' : isUnlocked ? 'text-cyan-300' : 'text-gray-600'}`}>
+                                                  {lvlNum}
+                                              </span>
+
+                                              {/* Floating Icon Badge */}
+                                              <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center bg-black/90 border border-white/20 shadow-sm">
+                                                  {isSelected ? (
+                                                      <CheckCircle className="w-3 h-3 text-cyan-300 fill-cyan-950" />
+                                                  ) : isUnlocked ? (
+                                                      <Play className="w-2.5 h-2.5 text-cyan-400 fill-cyan-400 mr-0.5" />
+                                                  ) : (
+                                                      <Lock className="w-2.5 h-2.5 text-gray-500" />
+                                                  )}
+                                              </div>
+                                          </button>
+
+                                          {/* Circle Subtext: Stage Name & Word */}
+                                          <div className="text-center w-full max-w-[64px] sm:max-w-[72px]">
+                                              <div className={`text-[10px] sm:text-[11px] font-bold line-clamp-1 truncate ${isSelected ? 'text-cyan-300' : isUnlocked ? 'text-gray-200' : 'text-gray-600'}`}>
+                                                  {theme.nameAr}
+                                              </div>
+                                              <div className="text-[8px] sm:text-[9px] font-mono text-cyan-400/80 truncate">
+                                                  {getLevelTargetWord(lvlNum)}
+                                              </div>
+                                          </div>
+                                      </div>
+                                  );
+                              })}
+                          </div>
                       </div>
 
                       {/* Circular Pills for Graphics & Performance Selector */}
@@ -897,6 +1100,21 @@ export const HUD: React.FC = () => {
 
   return (
     <div className={containerClass}>
+        {/* Dynamic Biome Shift Banner Toast */}
+        {biomeToast && (
+          <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none animate-bounce">
+            <div 
+              className="px-6 py-2.5 rounded-2xl bg-black/90 border-2 backdrop-blur-xl shadow-[0_0_30px_rgba(0,255,255,0.6)] flex flex-col items-center text-center dir-rtl"
+              style={{ borderColor: biomeToast.color }}
+            >
+              <span className="text-[10px] sm:text-xs font-bold text-gray-300 tracking-wider">✨ انتقال المنطقة السيبرانية • DYNAMIC BIOME SHIFT ✨</span>
+              <span className="text-sm sm:text-base font-black text-white font-sans drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+                {biomeToast.nameAr}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Unified Top HUD Section */}
         <div className="w-full flex flex-col gap-1.5 p-2 sm:p-3 pointer-events-none z-50">
             {/* Top Controls Header Bar */}
@@ -981,11 +1199,49 @@ export const HUD: React.FC = () => {
                 </div>
             </div>
 
-            {/* Center Header Stack: Level Name + Gemini Letters + Fever Gauge */}
-            <div className="flex flex-col items-center gap-1 mx-auto z-40 pointer-events-none">
-                {/* Level Indicator Badge */}
-                <div className="text-[10px] sm:text-xs text-cyan-300 font-bold tracking-tight font-mono bg-black/80 px-3 py-0.5 rounded-full border border-cyan-500/40 backdrop-blur-md flex items-center gap-1.5 dir-rtl whitespace-nowrap shadow-md pointer-events-auto">
-                    <span>المرحلة {level}: {getLevelTheme(level).nameAr}</span>
+            {/* Center Header Stack: Level Name + Gemini Letters + Fever Gauge + Boss Bar + Ultimate Bar */}
+            <div className="flex flex-col items-center gap-1 mx-auto z-40 pointer-events-none w-full max-w-lg">
+                
+                {/* Boss Encounter Health Bar & Banner */}
+                {bossState && bossState.active && (
+                    <div className="w-full bg-black/90 border-2 border-red-500/80 rounded-2xl p-2.5 backdrop-blur-xl shadow-[0_0_30px_rgba(255,0,0,0.7)] flex flex-col gap-1.5 animate-pulse dir-rtl pointer-events-auto">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl">👾</span>
+                                <div>
+                                    <h4 className="text-xs sm:text-sm font-black text-red-400 font-cyber tracking-wider">
+                                        معركة الزعيم: {bossState.nameAr}
+                                    </h4>
+                                    <span className="text-[10px] text-gray-400 font-mono">
+                                        {bossState.type.replace('_', ' ')} • {bossState.phase === 2 ? '🔥 وضع الغضب PHASE 2' : 'المرحلة 1 PHASE 1'}
+                                    </span>
+                                </div>
+                            </div>
+                            <span className="text-xs font-mono font-bold text-red-300 bg-red-950/80 px-2.5 py-0.5 rounded-full border border-red-500/60">
+                                {Math.max(0, bossState.health)} / {bossState.maxHealth} HP
+                            </span>
+                        </div>
+                        {/* Boss HP Bar */}
+                        <div className="w-full bg-gray-950 h-3 rounded-full overflow-hidden border border-red-900/80 p-0.5 relative">
+                            <div 
+                                className="h-full rounded-full transition-all duration-200 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 shadow-[0_0_15px_#ff0000]"
+                                style={{ width: `${Math.max(0, Math.min(100, (bossState.health / bossState.maxHealth) * 100))}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Level Indicator Badge & Ghost PB Marker */}
+                <div className="flex items-center gap-2">
+                    <div className="text-[10px] sm:text-xs text-cyan-300 font-bold tracking-tight font-mono bg-black/80 px-3 py-0.5 rounded-full border border-cyan-500/40 backdrop-blur-md flex items-center gap-1.5 dir-rtl whitespace-nowrap shadow-md pointer-events-auto">
+                        <span>المرحلة {level}: {getLevelTheme(level).nameAr}</span>
+                    </div>
+
+                    {bestGhostFrames && bestGhostFrames.length > 0 && (
+                        <div className="text-[9px] sm:text-[10px] text-purple-300 font-bold font-mono bg-purple-950/80 px-2.5 py-0.5 rounded-full border border-purple-500/50 backdrop-blur-md flex items-center gap-1 shadow-[0_0_10px_rgba(168,85,247,0.4)] pointer-events-auto">
+                            <span>👻 شبح رقمك القياسي نشط</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Gemini Collection Letters */}
@@ -1011,19 +1267,47 @@ export const HUD: React.FC = () => {
                     })}
                 </div>
 
-                {/* Fever Mode Gauge */}
-                <div className="w-32 sm:w-44 bg-black/80 border border-amber-500/50 rounded-full h-3 sm:h-3.5 p-0.5 backdrop-blur-md overflow-hidden relative shadow-[0_0_10px_rgba(255,180,0,0.3)] pointer-events-auto">
-                    <div 
-                        className={`h-full rounded-full transition-all duration-300 ${isFeverMode ? 'bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 animate-pulse' : 'bg-gradient-to-r from-yellow-500 to-amber-400'}`}
-                        style={{ width: `${isFeverMode ? 100 : feverMeter}%` }}
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] uppercase font-mono">
-                        {isFeverMode ? '🔥 FEVER ACTIVE (2X) 🔥' : `FEVER ${feverMeter}%`}
-                    </span>
+                {/* Fever Mode Gauge & Ultimate Ability Gauge */}
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    {/* Fever Mode Gauge */}
+                    <div className="w-28 sm:w-36 bg-black/80 border border-amber-500/50 rounded-full h-3 sm:h-3.5 p-0.5 backdrop-blur-md overflow-hidden relative shadow-[0_0_10px_rgba(255,180,0,0.3)]">
+                        <div 
+                            className={`h-full rounded-full transition-all duration-300 ${isFeverMode ? 'bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 animate-pulse' : 'bg-gradient-to-r from-yellow-500 to-amber-400'}`}
+                            style={{ width: `${isFeverMode ? 100 : feverMeter}%` }}
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center text-[7px] sm:text-[8px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] uppercase font-mono">
+                            {isFeverMode ? '🔥 FEVER (2X) 🔥' : `FEVER ${feverMeter}%`}
+                        </span>
+                    </div>
+
+                    {/* Ultimate Charge Gauge / Button */}
+                    <button
+                        onClick={() => {
+                            activateUltimate();
+                            audio.playVictoryFanfare();
+                        }}
+                        disabled={isUltimateActive || ultimateMeter < 100}
+                        className={`px-2.5 py-0.5 rounded-full border transition-all flex items-center gap-1 text-[8px] sm:text-[9px] font-black font-mono tracking-wider ${
+                            isUltimateActive
+                                ? 'bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-400 text-white border-white shadow-[0_0_20px_rgba(255,0,255,0.8)] animate-pulse'
+                                : ultimateMeter >= 100
+                                    ? 'bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 text-black border-yellow-300 shadow-[0_0_15px_gold] animate-bounce hover:scale-105 cursor-pointer'
+                                    : 'bg-black/80 text-gray-400 border-gray-700'
+                        }`}
+                        title="القدرة الخارقة (اضغط Q أو E)"
+                    >
+                        <Zap className="w-2.5 h-2.5" />
+                        <span>{isUltimateActive ? '⚡ ULTIMATE ACTIVE ⚡' : ultimateMeter >= 100 ? '⚡ جاهز! [Q/E]' : `ULT ${Math.floor(ultimateMeter)}%`}</span>
+                    </button>
                 </div>
 
                 {/* Active Powerups Row */}
                 <div className="flex items-center gap-1.5 pointer-events-auto mt-0.5">
+                     {isUltimateActive && (
+                          <div className="bg-gradient-to-r from-purple-500 to-pink-500 border border-white text-white font-black px-2 py-0.5 rounded-full text-[10px] sm:text-xs animate-bounce flex items-center shadow-[0_0_15px_#ff00ff]">
+                              <Zap className="mr-1 w-3 h-3 fill-white" /> HYPER DRIVE
+                          </div>
+                     )}
                      {isImmortalityActive && (
                           <div className="bg-yellow-500/20 border border-yellow-400 text-yellow-400 font-bold px-2 py-0.5 rounded-full text-[10px] sm:text-xs animate-pulse flex items-center shadow-[0_0_10px_gold]">
                               <Shield className="mr-1 w-3 h-3 fill-yellow-400" /> IMMORTAL
@@ -1065,8 +1349,23 @@ export const HUD: React.FC = () => {
                  </button>
              </div>
 
-             {/* Right side: Action Buttons (Laser, Jump, Special) */}
+             {/* Right side: Action Buttons (Laser, Ultimate, Jump, Special) */}
              <div className="flex items-center space-x-2 sm:space-x-3">
+                 {/* Ultimate Touch Button */}
+                 {ultimateMeter >= 100 && (
+                     <button
+                        onClick={() => {
+                            activateUltimate();
+                            audio.playVictoryFanfare();
+                        }}
+                        className="px-3 h-16 sm:h-18 bg-gradient-to-tr from-yellow-500 via-orange-500 to-pink-500 backdrop-blur-md border-2 border-yellow-300 text-black font-black rounded-2xl flex flex-col items-center justify-center active:scale-90 transition-transform shadow-[0_0_25px_gold] animate-bounce text-xs"
+                        aria-label="Ultimate Ability"
+                     >
+                         <Zap className="w-6 h-6 text-black animate-pulse fill-black" />
+                         <span className="text-[10px] mt-0.5">الخارق ⚡</span>
+                     </button>
+                 )}
+
                  {blasterAmmo > 0 && (
                    <button 
                     onClick={() => {

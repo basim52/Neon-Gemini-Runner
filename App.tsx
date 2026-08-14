@@ -12,28 +12,26 @@ import { Player } from './components/World/Player';
 import { LevelManager } from './components/World/LevelManager';
 import { Effects } from './components/World/Effects';
 import { HUD } from './components/UI/HUD';
+import { SpeedBlurOverlay } from './components/UI/SpeedBlurOverlay';
 import { useStore } from './store';
-import { GraphicsQuality } from './types';
+import { GraphicsQuality, GameStatus, RUN_SPEED_BASE } from './types';
 
-// Dynamic Camera Controller
+// Dynamic Camera Controller with Speed FOV Motion Warp
 const CameraController = () => {
   const { camera, size } = useThree();
-  const { laneCount } = useStore();
+  const laneCount = useStore((s) => s.laneCount);
+  const speed = useStore((s) => s.speed);
+  const isFeverMode = useStore((s) => s.isFeverMode);
+  const status = useStore((s) => s.status);
   
   useFrame((state, delta) => {
     // Determine if screen is narrow (mobile portrait)
     const aspect = size.width / size.height;
-    const isMobile = aspect < 1.2; // Threshold for "mobile-like" narrowness or square-ish displays
+    const isMobile = aspect < 1.2;
 
-    // Calculate expansion factors
-    // Mobile requires backing up significantly more because vertical FOV is fixed in Three.js,
-    // meaning horizontal view shrinks as aspect ratio drops.
-    // We use more aggressive multipliers for mobile to keep outer lanes in frame.
     const heightFactor = isMobile ? 2.0 : 0.5;
     const distFactor = isMobile ? 4.5 : 1.0;
 
-    // Base (3 lanes): y=5.5, z=8
-    // Calculate target based on how many extra lanes we have relative to the start
     const extraLanes = Math.max(0, laneCount - 3);
 
     const targetY = 5.5 + (extraLanes * heightFactor);
@@ -44,8 +42,18 @@ const CameraController = () => {
     // Smoothly interpolate camera position
     camera.position.lerp(targetPos, delta * 2.0);
     
-    // Look further down the track to see the end of lanes
-    // Adjust look target slightly based on height to maintain angle
+    // Calculate speed factor for FOV warp (60° up to 80° at high speeds)
+    const isPlaying = status === GameStatus.PLAYING;
+    const rawRatio = isPlaying ? Math.max(0, (speed - RUN_SPEED_BASE) / (RUN_SPEED_BASE * 1.8)) : 0;
+    const speedRatio = Math.min(1.0, isFeverMode ? Math.max(0.7, rawRatio + 0.3) : rawRatio);
+
+    const perspectiveCam = camera as THREE.PerspectiveCamera;
+    if (perspectiveCam.isPerspectiveCamera) {
+      const targetFov = 60 + speedRatio * 20; // 60° base FOV -> 80° hyper-speed FOV
+      perspectiveCam.fov = THREE.MathUtils.lerp(perspectiveCam.fov, targetFov, delta * 3.0);
+      perspectiveCam.updateProjectionMatrix();
+    }
+    
     camera.lookAt(0, 0, -30); 
   });
   
@@ -81,6 +89,7 @@ function App() {
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden select-none">
       <HUD />
+      <SpeedBlurOverlay />
       <Canvas
         shadows={isShadows}
         dpr={dpr} 

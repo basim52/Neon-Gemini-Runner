@@ -74,7 +74,12 @@ export const Player: React.FC = () => {
     isShieldDroneActive,
     blasterAmmo,
     useBlasterAmmo,
-    activeSkin
+    activeSkin,
+    isUltimateActive,
+    activateUltimate,
+    ultimateMeter,
+    recordGhostFrame,
+    techUpgrades
   } = useStore();
   
   const [lane, setLane] = React.useState(0);
@@ -207,6 +212,8 @@ export const Player: React.FC = () => {
           activateImmortality();
       } else if (e.key === 'f' || e.key === 'c' || e.key === 'x') {
           triggerBlaster();
+      } else if (e.key === 'q' || e.key === 'e' || e.key === 'r') {
+          activateUltimate();
       }
     };
 
@@ -386,6 +393,14 @@ export const Player: React.FC = () => {
     } else {
         groupRef.current.visible = true;
     }
+    // Ghost frame logging
+    if (Math.random() < 0.25) {
+      recordGhostFrame({
+        x: groupRef.current.position.x,
+        y: groupRef.current.position.y,
+        z: groupRef.current.position.z
+      });
+    }
   });
 
   // Damage Handler
@@ -408,6 +423,21 @@ export const Player: React.FC = () => {
         <mesh ref={magnetAuraRef} position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={MAGNET_AURA_GEO}>
           <meshBasicMaterial color="#00ffff" transparent opacity={0.6} side={THREE.DoubleSide} />
         </mesh>
+      )}
+
+      {/* Hero Ultimate Supercharged Field */}
+      {isUltimateActive && (
+        <group position={[0, 1.2, 0]}>
+          <mesh>
+            <sphereGeometry args={[1.5, 16, 16]} />
+            <meshBasicMaterial color="#ffff00" wireframe transparent opacity={0.4} />
+          </mesh>
+          <mesh rotation={[Math.PI / 3, 0, 0]}>
+            <torusGeometry args={[1.8, 0.06, 16, 32]} />
+            <meshBasicMaterial color="#00ffff" />
+          </mesh>
+          <pointLight color="#ffff00" intensity={4} distance={8} />
+        </group>
       )}
 
       {/* Orbiting Shield Drone */}
